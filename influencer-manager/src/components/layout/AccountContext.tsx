@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
+import { useAuth } from "@/lib/AuthContext";
+import { authApi } from "@/lib/api";
 
 interface AccountContextValue {
   name: string;
@@ -12,25 +14,27 @@ interface AccountContextValue {
 const AccountContext = createContext<AccountContextValue | null>(null);
 
 export function AccountProvider({ children }: { children: ReactNode }) {
-  const [name, setNameState] = useState("田中 太郎");
-  const [photoUrl, setPhotoUrlState] = useState<string | null>(null);
+  const { user, refreshUser } = useAuth();
 
-  useEffect(() => {
-    const storedName = localStorage.getItem("account-name");
-    const storedPhoto = localStorage.getItem("account-photo");
-    if (storedName) setNameState(storedName);
-    if (storedPhoto) setPhotoUrlState(storedPhoto);
-  }, []);
+  const name = user?.name ?? "ゲスト";
+  const photoUrl = user?.photo_url ?? null;
 
-  const setName = (v: string) => {
-    setNameState(v);
-    localStorage.setItem("account-name", v);
+  const setName = async (v: string) => {
+    try {
+      await authApi.updateMe({ name: v });
+      await refreshUser();
+    } catch {
+      // Silently fail — settings page handles errors
+    }
   };
 
-  const setPhotoUrl = (v: string | null) => {
-    setPhotoUrlState(v);
-    if (v) localStorage.setItem("account-photo", v);
-    else localStorage.removeItem("account-photo");
+  const setPhotoUrl = async (v: string | null) => {
+    try {
+      await authApi.updateMe({ photo_url: v });
+      await refreshUser();
+    } catch {
+      // Silently fail
+    }
   };
 
   return (

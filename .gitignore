@@ -1,6 +1,22 @@
 # Claude / Gemini AI
 .claude/
+.gemini/
+.agent/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Environment
+backend/.env
+
+# Docker
+pgdata/

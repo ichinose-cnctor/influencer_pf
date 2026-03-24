@@ -1,0 +1,83 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-northeast1
+  REGISTRY: asia-northeast1-docker.pkg.dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 環境判定 ──
+      - name: Set environment variables
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "ENV_NAME=production" >> $GITHUB_ENV
+            echo "SERVICE_NAME=influencerpf-api" >> $GITHUB_ENV
+            echo "DB_SECRET=DATABASE_URL:latest" >> $GITHUB_ENV
+            echo "KEY_SECRET=SECRET_KEY:latest" >> $GITHUB_ENV
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL_PROD }}" >> $GITHUB_ENV
+          else
+            echo "ENV_NAME=staging" >> $GITHUB_ENV
+            echo "SERVICE_NAME=influencerpf-api-stg" >> $GITHUB_ENV
+            echo "DB_SECRET=DATABASE_URL_STG:latest" >> $GITHUB_ENV
+            echo "KEY_SECRET=SECRET_KEY_STG:latest" >> $GITHUB_ENV
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL_STG }}" >> $GITHUB_ENV
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/influencerpf/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/influencerpf/${{ env.SERVICE_NAME }}:latest \
+            ./backend
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/influencerpf/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/influencerpf/${{ env.SERVICE_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/influencerpf/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          env_vars: |
+            FRONTEND_URL=${{ env.FRONTEND_URL }}
+            ENV_NAME=${{ env.ENV_NAME }}
+          secrets: |
+            DATABASE_URL=${{ env.DB_SECRET }}
+            SECRET_KEY=${{ env.KEY_SECRET }}
+
+      - name: Show deployed URL
+        run: |
+          URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --format="value(status.url)")
+          echo "::notice::[${{ env.ENV_NAME }}] Deployed to: $URL"
