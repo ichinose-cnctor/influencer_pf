@@ -1,0 +1,6 @@
+# Claude / Gemini AI
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
