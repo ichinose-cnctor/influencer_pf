@@ -35,6 +35,7 @@ export default function NewAnnouncementPage() {
   const [publishDate, setPublishDate] = useState("");
   const [expiryEnabled, setExpiryEnabled] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
+  const [target, setTarget] = useState("all");
 
   useEffect(() => {
     const editing = sessionStorage.getItem("announcement-editing");

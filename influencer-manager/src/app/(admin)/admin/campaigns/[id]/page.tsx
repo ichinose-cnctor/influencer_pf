@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -295,6 +295,14 @@ function formatFollowers(n: number): string {
 }
 
 export default function CampaignDetailPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">読み込み中...</div>}>
+      <CampaignDetailContent />
+    </Suspense>
+  );
+}
+
+function CampaignDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -42,66 +42,59 @@ type Conversation = {
 const conversations: Conversation[] = [
   {
     id: 1,
-    name: "山田 花子",
-    handle: "@hanako_lifestyle",
-    initials: "山",
-    avatarColor: "from-pink-400 to-rose-400",
-    campaign: "夏季コスメ PR",
-    lastMessage: "修正しました！ご確認よろしくお願いします。",
-    lastTime: "10:34",
+    name: "佐藤 美咲",
+    handle: "@misaki_travel",
+    initials: "佐",
+    avatarColor: "from-blue-400 to-indigo-500",
+    campaign: "高級旅館 宿泊体験 PR",
+    lastMessage: "投稿内容の確認をお願いいたします。修正の希望があればお申し付けください。",
+    lastTime: "10:30",
     unread: 1,
     online: true,
     messages: [
-      { id: 1, isMine: false, text: "こんにちは！今回のキャンペーンをお受けします。商品はいつ頃届きますか？", time: "7/2 10:34", read: true },
-      { id: 2, isMine: true, text: "ご参加ありがとうございます！7/8〜10の間に発送予定です。追跡番号は届き次第お送りします。", time: "7/2 11:15", read: true },
-      { id: 3, isMine: false, text: "承知しました！商品が届いたら早速撮影を始めます。ハッシュタグはどれを必ず入れれば良いでしょうか？", time: "7/2 11:30", read: true },
-      { id: 4, isMine: true, text: "#BeautyBrand #夏コスメ2025 の2つは必須でお願いします。あとはお任せします！", time: "7/2 11:45", read: true },
-      { id: 5, isMine: false, text: "フィード投稿の初稿ができました！確認いただけますか？", time: "7/24 14:22", read: true },
-      { id: 6, isMine: true, text: "拝見しました！とても素敵な仕上がりです。キャプションの2行目をもう少し自然な表現にして頂けますか？", time: "7/24 16:05", read: true },
-      { id: 7, isMine: false, text: "修正しました！ご確認よろしくお願いします。", time: "10:34", read: false },
+      { id: 1, isMine: true, text: "よろしくお願いします。投稿の下書きができたら見せてください。", time: "昨日 15:00", read: true },
+      { id: 2, isMine: false, text: "承知いたしました。明日の午前中にはお送りします。", time: "昨日 16:30", read: true },
+      { id: 3, isMine: false, text: "投稿内容の確認をお願いいたします。修正の希望があればお申し付けください。", time: "今日 10:30", read: false },
     ],
   },
   {
     id: 2,
-    name: "鈴木 健太",
-    handle: "@kenta_fitness",
-    initials: "鈴",
-    avatarColor: "from-sky-400 to-blue-500",
-    campaign: "フィットネスアプリ 動画レビュー",
-    lastMessage: "動画の編集が完了しました！",
+    name: "山田 健太",
+    handle: "@kenta_eats",
+    initials: "山",
+    avatarColor: "from-orange-400 to-amber-500",
+    campaign: "オーガニックカフェ PR",
+    lastMessage: "ありがとうございます！来店日時の変更は可能ですか？",
     lastTime: "昨日",
     unread: 0,
     online: false,
     messages: [
-      { id: 1, isMine: true, text: "鈴木さん、今回の案件をよろしくお願いします！", time: "7/10 9:00", read: true },
-      { id: 2, isMine: false, text: "こちらこそよろしくお願いします。撮影スケジュールを確認させてください。", time: "7/10 10:15", read: true },
-      { id: 3, isMine: true, text: "7/15〜7/20の間で自由に撮影いただければ大丈夫です。", time: "7/10 10:30", read: true },
-      { id: 4, isMine: false, text: "了解しました！では7/16に撮影予定で進めます。", time: "7/10 11:00", read: true },
-      { id: 5, isMine: false, text: "動画の編集が完了しました！", time: "昨日", read: true },
+      { id: 1, isMine: false, text: "採用ありがとうございます！", time: "月曜日 10:00", read: true },
+      { id: 2, isMine: true, text: "よろしくお願いします。来店日時は来週水曜で大丈夫でしょうか？", time: "月曜日 11:15", read: true },
+      { id: 3, isMine: false, text: "ありがとうございます！来店日時の変更は可能ですか？", time: "昨日 14:00", read: true },
     ],
   },
   {
     id: 3,
-    name: "佐藤 みのり",
-    handle: "@minori_foodie",
-    initials: "佐",
-    avatarColor: "from-amber-400 to-orange-400",
-    campaign: "オーガニック食品 ブログ記事",
-    lastMessage: "サンプルを受け取りました。ありがとうございます！",
+    name: "Aya",
+    handle: "@aya_lifestyle",
+    initials: "A",
+    avatarColor: "from-rose-400 to-red-500",
+    campaign: "リゾートホテル サウナPR",
+    lastMessage: "報酬の振込先について確認させてください。",
     lastTime: "月曜日",
-    unread: 0,
+    unread: 3,
     online: true,
     messages: [
-      { id: 1, isMine: true, text: "佐藤さん、オーガニック食品のPR案件のご依頼です。ご興味ありますか？", time: "7/20 14:00", read: true },
-      { id: 2, isMine: false, text: "はい！グルメ系は得意ですのでぜひお受けしたいです。", time: "7/20 15:22", read: true },
-      { id: 3, isMine: true, text: "ありがとうございます！では詳細資料をお送りします。", time: "7/20 15:40", read: true },
-      { id: 4, isMine: false, text: "サンプルを受け取りました。ありがとうございます！", time: "月曜日", read: true },
+      { id: 1, isMine: false, text: "お世話になっております。", time: "月曜日 09:00", read: false },
+      { id: 2, isMine: false, text: "プロジェクト完了お疲れ様でした。", time: "月曜日 09:05", read: false },
+      { id: 3, isMine: false, text: "報酬の振込先について確認させてください。", time: "月曜日 09:10", read: false },
     ],
   },
   {
     id: 4,
-    name: "中村 咲",
-    handle: "@saki_travel",
+    name: "中村 リク",
+    handle: "@riku_outdoor",
     initials: "中",
     avatarColor: "from-violet-400 to-purple-500",
     campaign: "旅行アプリ TikTok PR",
@@ -134,6 +127,14 @@ const conversations: Conversation[] = [
 ];
 
 export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">読み込み中...</div>}>
+      <MessagesContent />
+    </Suspense>
+  );
+}
+
+function MessagesContent() {
   const searchParams = useSearchParams();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
