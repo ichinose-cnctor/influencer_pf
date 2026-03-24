@@ -48,7 +48,7 @@ export default function AnnouncementConfirmPage() {
 
   const handlePublish = () => {
     if (data) {
-      const existing: Announcement[] = JSON.parse(localStorage.getItem("announcements") ?? "[]");
+      const existing: Record<string, unknown>[] = JSON.parse(localStorage.getItem("announcements") ?? "[]");
       if (data.editingId) {
         const updated = existing.map((a) =>
           a.id === data.editingId
