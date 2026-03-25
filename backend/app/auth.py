@@ -31,6 +31,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
+import sys
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
@@ -44,15 +46,20 @@ def get_current_user(
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: int = payload.get("sub")
         if user_id is None:
+            sys.stderr.write("user_id is none\n"); sys.stderr.flush()
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        sys.stderr.write(f"JWTError: {e}\n"); sys.stderr.flush()
         raise credentials_exception
 
     user = db.query(User).filter(User.id == user_id).first()
-    if user is None or user.is_active is False:
+    if user is None:
+        sys.stderr.write(f"user is none for id {user_id}\n"); sys.stderr.flush()
+        raise credentials_exception
+    if user.is_active is False:
+        sys.stderr.write(f"user is inactive for id {user_id}\n"); sys.stderr.flush()
         raise credentials_exception
     return user
-
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != "admin":

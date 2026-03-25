@@ -86,11 +86,14 @@ def debug_user(db: Session = Depends(database.get_db)):
     user = db.query(models.User).filter(models.User.email == "levgo_sns@cnctor.jp").first()
     if not user:
         return {"error": "not found"}
+    key = settings.SECRET_KEY
     return {
         "id": user.id,
         "email": user.email,
         "is_active": user.is_active,
-        "type_is_active": str(type(user.is_active)),
-        "role": user.role
+        "role": user.role,
+        "secret_key_len": len(key),
+        "secret_key_repr": repr(key[:6]) + "..." + repr(key[-6:]),
+        "secret_key_hex_end": key[-4:].encode().hex(),
     }
 
