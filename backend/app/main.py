@@ -2,11 +2,13 @@ import time
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.database import engine, Base
+from app import database, models
 from app.routers import auth, campaigns, influencers, messages, announcements, dashboard, notifications, portal, master, seed
 
 logger = logging.getLogger(__name__)
@@ -77,4 +79,18 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/api/debug/user")
+def debug_user(db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == "levgo_sns@cnctor.jp").first()
+    if not user:
+        return {"error": "not found"}
+    return {
+        "id": user.id,
+        "email": user.email,
+        "is_active": user.is_active,
+        "type_is_active": str(type(user.is_active)),
+        "role": user.role
+    }
 
