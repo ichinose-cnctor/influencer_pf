@@ -97,3 +97,15 @@ def debug_user(db: Session = Depends(database.get_db)):
         "secret_key_hex_end": key[-4:].encode().hex(),
     }
 
+
+@app.post("/api/debug/decode")
+def debug_decode(body: dict):
+    from jose import jwt as jose_jwt, JWTError
+    token = body.get("token", "")
+    key = settings.SECRET_KEY
+    try:
+        decoded = jose_jwt.decode(token, key, algorithms=["HS256"])
+        return {"ok": True, "decoded": decoded, "key_len": len(key)}
+    except JWTError as e:
+        return {"ok": False, "error": str(e), "key_len": len(key), "key_start": key[:8]}
+
