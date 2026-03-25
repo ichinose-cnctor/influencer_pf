@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, HelpCircle, BookOpen, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +8,7 @@ import { useRef } from "react";
 import { useNotification } from "./NotificationContext";
 import { useAccount } from "./AccountContext";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "@/lib/AuthContext";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/admin/dashboard": { title: "ダッシュボード", subtitle: "案件の進捗状況を確認できます" },
@@ -24,10 +25,17 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { open, setOpen, unreadCount } = useNotification();
   const { name } = useAccount();
   const { sidebarOpen, setSidebarOpen } = useSidebar();
+  const { logout } = useAuth();
   const bellRef = useRef<HTMLButtonElement>(null);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/admin/login");
+  };
 
   const isCampaignDetail = pathname.startsWith("/admin/campaigns/") && !pathname.startsWith("/admin/campaigns/new");
   const isAnnouncementDetail = pathname.startsWith("/admin/announcements/") && !pathname.startsWith("/admin/announcements/new");
@@ -98,7 +106,7 @@ export function Header() {
       {/* ログアウト（lg以上のみ） */}
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hidden lg:flex">
+          <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-foreground hidden lg:flex" onClick={handleLogout}>
             <LogOut className="h-4 w-4" />
           </Button>
         </TooltipTrigger>

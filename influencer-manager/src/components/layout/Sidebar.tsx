@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -18,12 +18,21 @@ import { Badge } from "@/components/ui/badge";
 import { useNotification } from "./NotificationContext";
 import { useAccount } from "./AccountContext";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "@/lib/AuthContext";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { open, setOpen, unreadCount } = useNotification();
   const { name, photoUrl } = useAccount();
   const { sidebarOpen, setSidebarOpen } = useSidebar();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    setSidebarOpen(false);
+    router.push("/admin/login");
+  };
 
   const isActive = (href: string) => pathname === href;
   const isDashboardActive = pathname === "/admin/dashboard";
@@ -210,6 +219,7 @@ export function Sidebar() {
           <button
             className="lg:hidden p-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
             aria-label="ログアウト"
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
           </button>
