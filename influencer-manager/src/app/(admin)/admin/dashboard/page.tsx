@@ -7,152 +7,103 @@ import { Users, Briefcase, Megaphone, ArrowUpRight, Clock, CheckCircle2, Bell, P
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const stats = [
-  {
-    label: "登録インフルエンサー",
-    value: "248",
-    change: "+18 今月",
-    icon: Users,
-    color: "text-sky-600",
-    bg: "bg-sky-50",
-    href: "/admin/influencers",
-    linkLabel: "一覧を見る",
-  },
-  {
-    label: "募集中の案件",
-    value: "5",
-    icon: Megaphone,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    href: "/admin/campaigns?tab=募集中",
-    linkLabel: "案件を見る",
-  },
-  {
-    label: "進行中の案件",
-    value: "12",
-    icon: Briefcase,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    href: "/admin/campaigns?tab=進行中",
-    linkLabel: "案件を見る",
-  },
-  {
-    label: "完了案件",
-    value: "87",
-    icon: CheckCircle2,
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    href: "/admin/campaigns?tab=完了",
-    linkLabel: "案件を見る",
-  },
-];
-
-const campaigns = [
-  {
-    id: 1,
-    title: "夏季コスメ PR キャンペーン",
-    client: "BeautyBrand Co.",
-    status: "進行中",
-    statusColor: "bg-blue-100 text-blue-700",
-    influencer: "山田 花子",
-    initials: "山",
-    deadline: "2025-08-31",
-    amount: "¥380,000",
-  },
-  {
-    id: 2,
-    title: "新作スニーカー インスタ投稿",
-    client: "SneakerWorld",
-    status: "募集中",
-    statusColor: "bg-amber-100 text-amber-700",
-    influencer: "未アサイン",
-    initials: "?",
-    deadline: "2025-09-15",
-    amount: "¥150,000",
-  },
-  {
-    id: 3,
-    title: "フィットネスアプリ 動画レビュー",
-    client: "FitLife App",
-    status: "完了",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    influencer: "鈴木 健太",
-    initials: "鈴",
-    deadline: "2025-07-20",
-    amount: "¥220,000",
-  },
-  {
-    id: 4,
-    title: "オーガニック食品 ブログ記事",
-    client: "GreenEats Japan",
-    status: "進行中",
-    statusColor: "bg-blue-100 text-blue-700",
-    influencer: "佐藤 みのり",
-    initials: "佐",
-    deadline: "2025-09-01",
-    amount: "¥95,000",
-  },
-  {
-    id: 5,
-    title: "旅行アプリ TikTok PR",
-    client: "TravelMate",
-    status: "募集中",
-    statusColor: "bg-amber-100 text-amber-700",
-    influencer: "未アサイン",
-    initials: "?",
-    deadline: "2025-10-01",
-    amount: "¥200,000",
-  },
-];
-
-const recentActivity = [
-  { icon: CheckCircle2, color: "text-emerald-500", text: "山田花子さんが「夏季コスメ PR」の投稿を完了しました", time: "10分前" },
-  { icon: Megaphone, color: "text-violet-500", text: "新規案件「秋冬ファッション特集」が作成されました", time: "1時間前" },
-  { icon: Users, color: "text-sky-500", text: "中村 咲さんが新規登録しました（フォロワー 12万人）", time: "3時間前" },
-  { icon: Clock, color: "text-amber-500", text: "「フィットネスアプリ」の支払い処理が完了しました", time: "昨日" },
-];
-
-const statusCounts = [
-  { label: "募集中", count: 5, color: "bg-amber-400" },
-  { label: "進行中", count: 12, color: "bg-blue-500" },
-  { label: "完了", count: 87, color: "bg-emerald-500" },
-];
-
-const categoryColors: Record<string, string> = {
-  お知らせ: "bg-sky-100 text-sky-700",
-  重要: "bg-amber-100 text-amber-700",
-  緊急: "bg-rose-100 text-rose-700",
-  システム: "bg-slate-100 text-slate-700",
-};
-
-const targetLabels: Record<string, string> = {
-  all: "全インフルエンサー",
-  active: "進行中の案件のみ",
-};
-
-interface Announcement {
-  id: number;
-  title: string;
-  body: string;
-  category: string;
-  target: string;
-  createdAt: string;
-}
+import { dashboardApi } from "@/lib/api";
 
 export default function DashboardPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const router = useRouter();
 
+  const [statsData, setStatsData] = useState<any>(null);
+  const [recentCampaigns, setRecentCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fallback data for things not yet in the DB
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, campaignsRes] = await Promise.all([
+          dashboardApi.stats(),
+          dashboardApi.recentCampaigns()
+        ]);
+        setStatsData(statsRes);
+        setRecentCampaigns(campaignsRes);
+      } catch (err) {
+        console.error("Dashboard data fetch failed", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+
+    // LocalStorage announcements
     const saved = localStorage.getItem("announcements");
     if (saved) setAnnouncements(JSON.parse(saved));
   }, []);
 
-  const router = useRouter();
+  if (loading) {
+    return <div className="p-8 flex items-center justify-center">読み込み中...</div>;
+  }
 
-  const editAnnouncement = (a: Announcement) => {
-    sessionStorage.setItem("announcement-editing", JSON.stringify(a));
-    router.push("/admin/announcements/new");
+  const stats = [
+    {
+      label: "登録インフルエンサー",
+      value: statsData?.total_influencers || 0,
+      change: `+${statsData?.new_influencers_this_month || 0} 今月`,
+      icon: Users,
+      color: "text-sky-600",
+      bg: "bg-sky-50",
+      href: "/admin/influencers",
+      linkLabel: "一覧を見る",
+    },
+    {
+      label: "募集中の案件",
+      value: statsData?.recruiting_campaigns || 0,
+      icon: Megaphone,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+      href: "/admin/campaigns?tab=募集中",
+      linkLabel: "案件を見る",
+    },
+    {
+      label: "進行中の案件",
+      value: statsData?.active_campaigns || 0,
+      icon: Briefcase,
+      color: "text-violet-600",
+      bg: "bg-violet-50",
+      href: "/admin/campaigns?tab=進行中",
+      linkLabel: "案件を見る",
+    },
+    {
+      label: "完了案件",
+      value: statsData?.completed_campaigns || 0,
+      icon: CheckCircle2,
+      color: "text-amber-600",
+      bg: "bg-amber-50",
+      href: "/admin/campaigns?tab=完了",
+      linkLabel: "案件を見る",
+    },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "募集中": return "bg-amber-100 text-amber-700";
+      case "進行中": return "bg-blue-100 text-blue-700";
+      case "完了": return "bg-emerald-100 text-emerald-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const categoryColors: Record<string, string> = {
+    お知らせ: "bg-sky-100 text-sky-700",
+    重要: "bg-amber-100 text-amber-700",
+    緊急: "bg-rose-100 text-rose-700",
+    システム: "bg-slate-100 text-slate-700",
+  };
+
+  const targetLabels: Record<string, string> = {
+    all: "全インフルエンサー",
+    active: "進行中の案件のみ",
   };
 
   return (
@@ -168,10 +119,10 @@ export default function DashboardPage() {
                   <div className="min-w-0">
                     <p className="text-xs text-muted-foreground leading-tight">{stat.label}</p>
                     <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                    {"change" in stat && (
+                    {stat.change && (
                       <p className="flex items-center gap-1 text-xs text-emerald-600 mt-1">
                         <ArrowUpRight className="h-3 w-3" />
-                        {(stat as typeof stat & { change: string }).change}
+                        {stat.change}
                       </p>
                     )}
                   </div>
@@ -201,9 +152,9 @@ export default function DashboardPage() {
             <CardHeader className="pb-3 px-5 pt-5">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold">最近の案件</CardTitle>
-                <a href="/admin/campaigns" className="text-xs text-violet-600 hover:underline">
+                <Link href="/admin/campaigns" className="text-xs text-violet-600 hover:underline">
                   すべて見る
-                </a>
+                </Link>
               </div>
             </CardHeader>
             <CardContent className="px-0 pb-0">
@@ -213,35 +164,31 @@ export default function DashboardPage() {
                     <tr className="border-b border-border bg-muted/30">
                       <th className="text-left text-xs font-medium text-muted-foreground px-5 py-2.5">案件名</th>
                       <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2.5">ステータス</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground px-3 py-2.5 hidden md:table-cell">担当</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {campaigns.map((c) => (
+                    {recentCampaigns.map((c) => (
                       <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                         <td className="px-5 py-3">
                           <Link href={`/admin/campaigns/${c.id}`} className="block">
                             <p className="font-medium text-foreground text-sm lg:text-xs leading-tight hover:text-violet-600 transition-colors">{c.title}</p>
-                            <p className="text-sm lg:text-[11px] text-muted-foreground mt-0.5">{c.client}</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">{c.client_name}</p>
                           </Link>
                         </td>
                         <td className="px-3 py-3">
-                          <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 ${c.statusColor} border-0`}>
+                          <Badge className={`text-[10px] px-2 py-0.5 ${getStatusColor(c.status)} border-0`}>
                             {c.status}
                           </Badge>
                         </td>
-                        <td className="px-3 py-3 hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-[12px] lg:text-[10px] bg-violet-100 text-violet-700">
-                                {c.initials}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-muted-foreground">{c.influencer}</span>
-                          </div>
-                        </td>
                       </tr>
                     ))}
+                    {recentCampaigns.length === 0 && (
+                      <tr>
+                        <td colSpan={2} className="px-5 py-8 text-center text-sm text-muted-foreground">
+                          案件がありません
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -249,78 +196,73 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* 右サイドパネル */}
-        <div className="space-y-4">
-          {/* ステータス概要 */}
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3 px-5 pt-5">
-              <CardTitle className="text-sm font-semibold">案件ステータス</CardTitle>
-            </CardHeader>
-            <CardContent className="px-5 pb-5 space-y-3">
-              {statusCounts.map((s) => (
-                <div key={s.label}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">{s.label}</span>
-                    <span className="text-base lg:text-xs font-semibold text-foreground">{s.count}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${s.color} rounded-full`}
-                      style={{ width: `${Math.min((s.count / 104) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* お知らせ */}
-          <Card className="border border-border shadow-none">
-            <CardHeader className="pb-3 px-5 pt-5">
+        {/* お知らせ */}
+        <div className="xl:col-span-1 space-y-6">
+          {/* お知らせ管理 */}
+          <Card className="border border-border shadow-none overflow-hidden block">
+            <CardHeader className="p-4 bg-muted/10 border-b border-border">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <Bell className="h-4 w-4 text-violet-600" />
                   <CardTitle className="text-sm font-semibold">お知らせ</CardTitle>
                 </div>
-                <Link href="/admin/announcements/new" className="text-xs text-violet-600 hover:underline">
-                  作成する
+                <Link
+                  href="/admin/announcements/new"
+                  className="flex items-center gap-1 text-[10px] lg:text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors bg-violet-50 px-2 py-1 rounded-full border border-violet-100/50"
+                  prefetch={true}
+                >
+                  <Pencil className="h-3 w-3" />
+                  新規作成
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="px-5 pb-5">
+            <CardContent className="p-0">
               {announcements.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  お知らせはありません
-                </p>
+                <div className="p-8 text-center bg-gray-50/50">
+                  <div className="bg-white h-10 w-10 rounded-full flex items-center justify-center mx-auto mb-3 border border-border/50 shadow-sm">
+                    <Bell className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 leading-none">発信中のお知らせはありません</p>
+                  <p className="text-xs text-gray-500 mt-2">重要な通知や案内を作成しましょう</p>
+                </div>
               ) : (
-                <div className="space-y-3">
+                <div className="divide-y divide-border/50 max-h-[400px] overflow-y-auto">
                   {announcements.map((a) => (
-                    <div key={a.id} className="flex items-center gap-2 pb-3 border-b border-border last:border-0 last:pb-0">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge className={`text-[12px] lg:text-[10px] px-1.5 py-0 border-0 shrink-0 ${categoryColors[a.category] ?? "bg-slate-100 text-slate-700"}`}>
+                    <div key={a.id} className="p-4 hover:bg-muted/20 transition-colors relative group">
+                      <div className="flex items-start justify-between gap-4 mb-2">
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge className={`text-[10px] px-1.5 py-0 border border-transparent font-medium ${categoryColors[a.category] || "bg-gray-100 text-gray-700"}`}>
                             {a.category}
                           </Badge>
-                          <span className="text-[12px] lg:text-[10px] text-muted-foreground shrink-0">{targetLabels[a.target] ?? a.target}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-wider font-medium">
+                            {new Date(a.createdAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          </span>
                         </div>
-                        <p className="text-xs font-semibold text-foreground leading-tight truncate">{a.title}</p>
-                        <p className="text-[12px] lg:text-[10px] text-muted-foreground">
-                          {new Date(a.createdAt).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-sm">
+                            <Users className="h-3 w-3" />
+                            {targetLabels[a.target] || "全インフルエンサー"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => editAnnouncement(a)}
-                          className="p-1.5 text-muted-foreground hover:text-violet-600 transition-colors"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-                        <Link href={`/admin/announcements/${a.id}`} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </Link>
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-violet-600 transition-colors line-clamp-1 leading-snug">
+                          {a.title}
+                        </h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {a.body}
+                        </p>
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+              {announcements.length > 0 && (
+                <div className="p-3 border-t border-border/50 bg-muted/10">
+                  <button className="w-full text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center justify-center gap-1 py-1 rounded-lg hover:bg-violet-50 transition-colors">
+                    すべて確認する
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
                 </div>
               )}
             </CardContent>

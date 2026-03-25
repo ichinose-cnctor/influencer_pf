@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import engine, Base
-from app.routers import auth, campaigns, influencers, messages, announcements, dashboard, notifications, portal, master
+from app.routers import auth, campaigns, influencers, messages, announcements, dashboard, notifications, portal, master, seed
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -58,6 +58,7 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router)
+app.include_router(seed.router)
 app.include_router(dashboard.router)
 app.include_router(campaigns.router)
 app.include_router(influencers.router)
