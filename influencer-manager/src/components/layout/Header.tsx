@@ -92,7 +92,7 @@ export function Header() {
       {/* アカウント名（sm以上のみ） */}
       <div className="hidden sm:flex flex-col leading-tight">
         <span className="text-sm font-medium text-foreground">{name}</span>
-        <span className="text-xs text-muted-foreground">levgo_sns@cnctor.jp</span>
+        <span className="text-xs text-muted-foreground">{useAccount().name ? "管理者アカウント" : ""}</span>
       </div>
 
       {/* ログアウト（lg以上のみ） */}

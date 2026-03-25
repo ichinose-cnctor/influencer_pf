@@ -16,7 +16,7 @@ const AccountContext = createContext<AccountContextValue | null>(null);
 export function AccountProvider({ children }: { children: ReactNode }) {
   const { user, refreshUser } = useAuth();
 
-  const name = user?.name ?? "ゲスト";
+  const name = user?.name ?? "";
   const photoUrl = user?.photo_url ?? null;
 
   const setName = async (v: string) => {
