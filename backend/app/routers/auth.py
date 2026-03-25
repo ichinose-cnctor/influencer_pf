@@ -38,7 +38,7 @@ def login(data: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="メールアドレスまたはパスワードが正しくありません")
 
-    token = create_access_token(data={"sub": user.id, "role": user.role})
+    token = create_access_token(data={"sub": str(user.id), "role": user.role})
     return {"access_token": token}
 
 

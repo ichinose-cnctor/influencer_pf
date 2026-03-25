@@ -44,10 +44,11 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
             sys.stderr.write("user_id is none\n"); sys.stderr.flush()
             raise credentials_exception
+        user_id = int(user_id_str)
     except JWTError as e:
         sys.stderr.write(f"JWTError: {e}\n"); sys.stderr.flush()
         raise credentials_exception
