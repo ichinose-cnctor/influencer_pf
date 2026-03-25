@@ -18,6 +18,10 @@ interface Step1Data {
   rewardStyle: "gifting" | "paid";
   minBudget: string;
   maxBudget: string;
+  publishStart?: string;
+  publishEnd?: string;
+  startDate?: string;
+  endDate?: string;
   period: string;
   genre: string;
   area: string;
@@ -56,10 +60,44 @@ export default function ConfirmPage() {
     if (s2) setStep2(JSON.parse(s2));
   }, []);
 
-  const handlePublish = () => {
-    sessionStorage.removeItem("campaign-step1");
-    sessionStorage.removeItem("campaign-step2");
-    router.push("/admin/campaigns");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePublish = async () => {
+    if (!step1) return;
+    setIsSubmitting(true);
+    try {
+      await import("@/lib/api").then(({ campaignApi }) => 
+        campaignApi.create({
+          title: step1.title,
+          description: step1.description,
+          category: step1.genre, // Mapping genre -> category
+          area: step1.area,
+          country: step1.country,
+          reward_style: step1.rewardStyle,
+          min_budget: step1.minBudget ? parseInt(step1.minBudget, 10) : 0,
+          max_budget: step1.maxBudget ? parseInt(step1.maxBudget, 10) : 0,
+          publish_start: step1.publishStart || null,
+          publish_end: step1.publishEnd || null,
+          start_date: step1.startDate || null,
+          end_date: step1.endDate || null,
+          video_url: step1.videoUrl,
+          platform: step2?.platform || null,
+          headcount: step2?.headcount || null,
+          min_followers: step2?.follower || null,
+          required_skills: step2?.skills || [],
+          required_languages: step2?.languages || [],
+          status: "募集中",
+        })
+      );
+      sessionStorage.removeItem("campaign-step1");
+      sessionStorage.removeItem("campaign-step2");
+      router.push("/admin/campaigns");
+    } catch (err) {
+      console.error(err);
+      alert("案件の保存に失敗しました。");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
