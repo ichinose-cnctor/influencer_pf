@@ -96,3 +96,29 @@ def seed_database(db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Success! Dummy data seeded successfully."}
+
+@router.post("/reset")
+def reset_database(db: Session = Depends(get_db)):
+    """
+    管理者以外の全ユーザー（インフルエンサー）、案件、応募、チャット情報を削除してリセットする。
+    """
+    try:
+        # 依存関係の深いものから削除
+        db.execute(text("DELETE FROM messages"))
+        db.execute(text("DELETE FROM conversation_participants"))
+        db.execute(text("DELETE FROM conversations"))
+        db.execute(text("DELETE FROM applications"))
+        db.execute(text("DELETE FROM campaign_media"))
+        db.execute(text("DELETE FROM campaigns"))
+        db.execute(text("DELETE FROM influencer_profiles"))
+        db.execute(text("DELETE FROM notifications"))
+        db.execute(text("DELETE FROM influencer_ratings"))
+        
+        # 管理者(role='admin')以外のユーザーを削除
+        db.execute(text("DELETE FROM users WHERE role != 'admin'"))
+        
+        db.commit()
+        return {"status": "success", "message": "All test data (campaigns, influencers, matches) has been reset."}
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e)}
