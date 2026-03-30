@@ -1,7 +1,7 @@
 import math
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models import Campaign, Application, User
@@ -136,27 +136,6 @@ def delete_campaign(campaign_id: int, db: Session = Depends(get_db), admin: User
         raise HTTPException(status_code=404, detail="案件が見つかりません")
     db.delete(c)
     db.commit()
-
-
-@router.post("/reset-all-danger-zone", status_code=204)
-def reset_all_campaigns(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    """
-    【危険】全ての案件、応募、メディア、チャット紐付けをリセットします。
-    """
-    from app.models import CampaignMedia
-    try:
-        # 1. 応募データ削除 (FK CASCADE)
-        db.query(Application).delete()
-        # 2. メディアデータ削除 (FK CASCADE)
-        db.query(CampaignMedia).delete()
-        # 3. チャットの案件紐付け解除 (FK nullable)
-        db.execute(text("UPDATE conversations SET campaign_id = NULL"))
-        # 4. 案件データ削除
-        db.query(Campaign).delete()
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Reset failed: {str(e)}")
 
 
 # ──── Applications ────
