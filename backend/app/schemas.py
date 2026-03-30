@@ -98,8 +98,9 @@ class CampaignCreate(BaseModel):
     video_url: Optional[str] = None
     image_gradient: Optional[str] = None
     client_name: Optional[str] = None
-    client_logo: Optional[str] = None
-    client_logo_color: Optional[str] = None
+    client_address: Optional[str] = None
+    client_website: Optional[str] = None
+    client_business_description: Optional[str] = None
 
 class CampaignUpdate(CampaignCreate):
     pass
@@ -132,8 +133,9 @@ class CampaignOut(BaseModel):
     video_url: Optional[str] = None
     image_gradient: Optional[str] = None
     client_name: Optional[str] = None
-    client_logo: Optional[str] = None
-    client_logo_color: Optional[str] = None
+    client_address: Optional[str] = None
+    client_website: Optional[str] = None
+    client_business_description: Optional[str] = None
     applicant_count: int = 0
     created_at: datetime
     updated_at: datetime

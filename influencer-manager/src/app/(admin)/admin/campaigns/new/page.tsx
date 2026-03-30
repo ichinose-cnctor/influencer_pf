@@ -39,6 +39,10 @@ export default function CreateCampaignPage() {
   const [area, setArea] = useState("");
   const [country, setCountry] = useState("");
   const [description, setDescription] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [clientWebsite, setClientWebsite] = useState("");
+  const [clientBusinessDescription, setClientBusinessDescription] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const applyStyle = (prefix: string, suffix: string = "") => {
@@ -82,6 +86,10 @@ export default function CreateCampaignPage() {
       setCountry(data.country ?? "");
       setDescription(data.description ?? "");
       setVideoUrl(data.videoUrl ?? "");
+      setClientName(data.clientName ?? "");
+      setClientAddress(data.clientAddress ?? "");
+      setClientWebsite(data.clientWebsite ?? "");
+      setClientBusinessDescription(data.clientBusinessDescription ?? "");
     }
   }, []);
 
@@ -125,16 +133,31 @@ export default function CreateCampaignPage() {
         alert("予算を入力してください");
         return;
       }
-      if (Number(minBudget) > Number(maxBudget)) {
-        alert("予算の最小額が最大額を上回っています");
+        if (Number(minBudget) > Number(maxBudget)) {
+          alert("予算の最小額が最大額を上回っています");
+          return;
+        }
+      }
+
+      // 会社情報のバリデーション
+      if (!clientName.trim()) {
+        alert("企業名を入力してください");
         return;
       }
-    }
+      if (!clientAddress.trim()) {
+        alert("本社所在地を入力してください");
+        return;
+      }
+      if (!clientBusinessDescription.trim()) {
+        alert("事業内容を入力してください");
+        return;
+      }
 
-    sessionStorage.setItem("campaign-step1", JSON.stringify({
-      title, rewardStyle, minBudget, maxBudget, publishStart, publishEnd, startDate, endDate, genre, area, country, description, videoUrl,
-      uploadedFileNames: uploadedFiles.map((f) => f.name),
-    }));
+      sessionStorage.setItem("campaign-step1", JSON.stringify({
+        title, rewardStyle, minBudget, maxBudget, publishStart, publishEnd, startDate, endDate, genre, area, country, description, videoUrl,
+        clientName, clientAddress, clientWebsite, clientBusinessDescription,
+        uploadedFileNames: uploadedFiles.map((f) => f.name),
+      }));
     router.push("/admin/campaigns/new/requirements");
   };
 
@@ -173,9 +196,71 @@ export default function CreateCampaignPage() {
 
       {/* フォーム本体 */}
       <div className="space-y-8 pb-24">
-      {/* タイトル */}
       <div>
         <h2 className="text-2xl font-bold text-foreground">プロジェクトはどんな内容ですか？</h2>
+      </div>
+
+      {/* 会社情報 (Absolute Top for Maximum Visibility) */}
+      <div className="space-y-6 p-6 rounded-2xl border-2 border-violet-100 bg-violet-50/20 shadow-sm mb-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 bg-violet-600 rounded-full" />
+          <div>
+            <h3 className="text-lg font-bold text-foreground">会社情報</h3>
+            <p className="text-[11px] text-muted-foreground">掲載企業の情報を入力してください（必須）</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              企業名 <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="株式会社〇〇"
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              本社所在地 <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              placeholder="東京都渋谷区〇〇 1-2-3"
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">ホームページ</label>
+            <input
+              type="url"
+              value={clientWebsite}
+              onChange={(e) => setClientWebsite(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              事業内容 <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              value={clientBusinessDescription}
+              onChange={(e) => setClientBusinessDescription(e.target.value)}
+              placeholder="事業内容を入力してください"
+              rows={1}
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background resize-none"
+            />
+          </div>
+        </div>
       </div>
 
       {/* 案件名 */}
@@ -279,6 +364,8 @@ export default function CreateCampaignPage() {
           </div>
         )}
       </div>
+
+
 
       {/* 公開期間 */}
       <div className="space-y-1.5">
@@ -496,6 +583,7 @@ export default function CreateCampaignPage() {
         />
         <p className="text-xs text-muted-foreground">※ ギャラリー画像の推奨縦横比は 1:1.7 です。</p>
       </div>
+
 
       {/* 続けるボタン（固定フッター） */}
       <div className="fixed bottom-0 left-0 lg:left-60 right-0 bg-background/90 backdrop-blur-sm border-t border-border px-4 sm:px-8 py-4 flex justify-end z-20">

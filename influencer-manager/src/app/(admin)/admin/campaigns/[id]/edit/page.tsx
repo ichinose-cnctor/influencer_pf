@@ -48,6 +48,10 @@ export default function EditCampaignPage() {
   const [description, setDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [maxSlots, setMaxSlots] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientAddress, setClientAddress] = useState("");
+  const [clientWebsite, setClientWebsite] = useState("");
+  const [clientBusinessDescription, setClientBusinessDescription] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
@@ -73,6 +77,10 @@ export default function EditCampaignPage() {
         setVideoUrl(data.video_url || "");
         // backend models/schemas need to support max_slots in CampaignOut
         setMaxSlots(String((data as any).max_slots || ""));
+        setClientName(data.client_name || "");
+        setClientAddress(data.client_address || "");
+        setClientWebsite(data.client_website || "");
+        setClientBusinessDescription(data.client_business_description || "");
       } catch (err) {
         console.error("Failed to fetch campaign", err);
         alert("データの取得に失敗しました");
@@ -93,6 +101,10 @@ export default function EditCampaignPage() {
       alert("案件名を入力してください");
       return;
     }
+    if (!clientName.trim() || !clientAddress.trim() || !clientBusinessDescription.trim()) {
+      alert("会社情報をすべて入力してください");
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
@@ -110,6 +122,10 @@ export default function EditCampaignPage() {
         description: description || null,
         video_url: videoUrl || null,
         max_slots: maxSlots ? parseInt(maxSlots) : null,
+        client_name: clientName,
+        client_address: clientAddress,
+        client_website: clientWebsite,
+        client_business_description: clientBusinessDescription,
       };
       await campaignApi.update(id, payload);
       setSaved(true);
@@ -404,6 +420,55 @@ export default function EditCampaignPage() {
           rows={8}
           className="w-full border border-border border-t-0 rounded-b-lg px-4 py-3 text-sm outline-none focus:border-violet-400 transition bg-background placeholder:text-muted-foreground resize-none"
         />
+      </div>
+
+      {/* 会社情報 */}
+      <div className="space-y-5">
+        <h3 className="text-sm font-semibold text-foreground">
+          会社情報を入力しましょう <span className="text-rose-500">*</span>
+        </h3>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">企業名</label>
+            <input
+              type="text"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              placeholder="株式会社◯◯"
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 transition bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">本社所在地</label>
+            <input
+              type="text"
+              value={clientAddress}
+              onChange={(e) => setClientAddress(e.target.value)}
+              placeholder="東京都渋谷区..."
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 transition bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">ホームページ</label>
+            <input
+              type="url"
+              value={clientWebsite}
+              onChange={(e) => setClientWebsite(e.target.value)}
+              placeholder="https://example.com"
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 transition bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">事業内容</label>
+            <textarea
+              value={clientBusinessDescription}
+              onChange={(e) => setClientBusinessDescription(e.target.value)}
+              placeholder="事業内容を詳しく入力してください"
+              rows={4}
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 transition bg-background resize-none"
+            />
+          </div>
+        </div>
       </div>
 
       {/* 添付メディア */}

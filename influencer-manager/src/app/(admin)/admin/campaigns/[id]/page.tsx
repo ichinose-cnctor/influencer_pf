@@ -340,6 +340,51 @@ function CampaignDetailContent() {
                 )}
               </CardContent>
             </Card>
+
+            {/* 会社情報 */}
+            <Card className="border border-border shadow-none">
+              <CardHeader className="pb-2 px-5 pt-5">
+                <CardTitle className="text-sm font-semibold">会社情報</CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 space-y-3">
+                <div className="flex items-start gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground shrink-0 w-24">
+                    <Building2 className="h-3.5 w-3.5" />
+                    企業名
+                  </span>
+                  <span className="font-medium text-foreground">{campaign.client_name || "—"}</span>
+                </div>
+                <div className="flex items-start gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground shrink-0 w-24">
+                    <MapPin className="h-3.5 w-3.5" />
+                    本社所在地
+                  </span>
+                  <span className="font-medium text-foreground">{campaign.client_address || "—"}</span>
+                </div>
+                <div className="flex items-start gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground shrink-0 w-24">
+                    <Globe className="h-3.5 w-3.5" />
+                    ホームページ
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {campaign.client_website ? (
+                      <a href={campaign.client_website} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline">
+                        {campaign.client_website}
+                      </a>
+                    ) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-start gap-4 text-xs">
+                  <span className="flex items-center gap-1.5 text-muted-foreground shrink-0 w-24">
+                    <FileText className="h-3.5 w-3.5" />
+                    事業内容
+                  </span>
+                  <p className="font-medium text-foreground leading-relaxed flex-1">
+                    {campaign.client_business_description || "—"}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
         </div>
       )}
 

@@ -81,8 +81,9 @@ class Campaign(Base):
     video_url = Column(Text)
     image_gradient = Column(String(100))
     client_name = Column(String(255))
-    client_logo = Column(String(10))
-    client_logo_color = Column(String(100))
+    client_address = Column(String(255))
+    client_website = Column(String(255))
+    client_business_description = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

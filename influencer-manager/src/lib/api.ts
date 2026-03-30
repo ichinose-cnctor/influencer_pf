@@ -237,8 +237,9 @@ export interface CampaignOut {
   video_url: string | null;
   image_gradient: string | null;
   client_name: string | null;
-  client_logo: string | null;
-  client_logo_color: string | null;
+  client_address: string | null;
+  client_website: string | null;
+  client_business_description: string | null;
   applicant_count: number;
   created_at: string;
   updated_at: string;

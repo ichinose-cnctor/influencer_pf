@@ -30,6 +30,10 @@ interface Step1Data {
   description: string;
   videoUrl: string;
   uploadedFileNames: string[];
+  clientName: string;
+  clientAddress: string;
+  clientWebsite?: string;
+  clientBusinessDescription: string;
 }
 
 interface Step2Data {
@@ -89,6 +93,10 @@ export default function ConfirmPage() {
           min_followers: step2?.follower || null,
           required_skills: step2?.skills || [],
           required_languages: step2?.languages || [],
+          client_name: step1.clientName,
+          client_address: step1.clientAddress,
+          client_website: step1.clientWebsite,
+          client_business_description: step1.clientBusinessDescription,
           status: "募集中",
         })
       );
@@ -188,6 +196,25 @@ export default function ConfirmPage() {
                   : undefined
               }
             />
+          </div>
+        </div>
+
+        {/* 会社情報 */}
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-3 bg-muted/40 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">会社情報</p>
+            <button
+              onClick={() => router.push("/admin/campaigns/new")}
+              className="text-xs text-violet-500 hover:underline"
+            >
+              編集する
+            </button>
+          </div>
+          <div className="px-5">
+            <Row label="企業名" value={step1?.clientName} />
+            <Row label="本社所在地" value={step1?.clientAddress} />
+            <Row label="ホームページ" value={step1?.clientWebsite} />
+            <Row label="事業内容" value={step1?.clientBusinessDescription} />
           </div>
         </div>
 
