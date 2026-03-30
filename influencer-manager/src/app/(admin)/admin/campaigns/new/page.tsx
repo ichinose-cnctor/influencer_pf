@@ -49,10 +49,46 @@ export default function CreateCampaignPage() {
   };
 
   const handleSubmit = () => {
+    // バリデーション
     if (!title.trim()) {
-      alert("案件名を入力してください");
+      alert("プロジェクトの案件名を入力してください");
       return;
     }
+    if (!publishStart || !publishEnd) {
+      alert("募集の公開期間を入力してください");
+      return;
+    }
+    if (new Date(publishStart) > new Date(publishEnd)) {
+      alert("公開期間の開始日が終了日より後の日付になっています");
+      return;
+    }
+    if (!startDate || !endDate) {
+      alert("プロジェクトの実施期間を入力してください");
+      return;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("プロジェクト期間の開始日が終了日より後の日付になっています");
+      return;
+    }
+    if (!genre) {
+      alert("カテゴリーを選択してください");
+      return;
+    }
+    if (!description.trim()) {
+      alert("プロジェクトの説明を入力してください");
+      return;
+    }
+    if (rewardStyle === "paid") {
+      if (!minBudget || !maxBudget) {
+        alert("予算を入力してください");
+        return;
+      }
+      if (Number(minBudget) > Number(maxBudget)) {
+        alert("予算の最小額が最大額を上回っています");
+        return;
+      }
+    }
+
     sessionStorage.setItem("campaign-step1", JSON.stringify({
       title, rewardStyle, minBudget, maxBudget, publishStart, publishEnd, startDate, endDate, genre, area, country, description, videoUrl,
       uploadedFileNames: uploadedFiles.map((f) => f.name),

@@ -139,6 +139,28 @@ export default function RequirementsPage() {
 
 
   const handleNext = () => {
+    // バリデーション
+    if (!platform) {
+      alert("募集対象のプラットフォームを選択してください");
+      return;
+    }
+    if (!headcount) {
+      alert("採用予定人数を選択してください");
+      return;
+    }
+    if (!maxSlots) {
+      alert("定員数を入力してください（自動遷移に必要です）");
+      return;
+    }
+    if (Number(maxSlots) < 1) {
+      alert("定員数には1以上の数値を入力してください");
+      return;
+    }
+    if (!follower) {
+      alert("希望するフォロワー数を選択してください");
+      return;
+    }
+
     sessionStorage.setItem("campaign-step2", JSON.stringify({
       platform, headcount, maxSlots, follower, skills, languages,
     }));
