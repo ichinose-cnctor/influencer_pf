@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -64,6 +64,26 @@ export default function CreateCampaignPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("campaign-step1");
+    if (saved) {
+      const data = JSON.parse(saved);
+      setTitle(data.title ?? "");
+      setRewardStyle(data.rewardStyle ?? "gifting");
+      setMinBudget(data.minBudget ?? "");
+      setMaxBudget(data.maxBudget ?? "");
+      setPublishStart(data.publishStart ?? "");
+      setPublishEnd(data.publishEnd ?? "");
+      setStartDate(data.startDate ?? "");
+      setEndDate(data.endDate ?? "");
+      setGenre(data.genre ?? "");
+      setArea(data.area ?? "");
+      setCountry(data.country ?? "");
+      setDescription(data.description ?? "");
+      setVideoUrl(data.videoUrl ?? "");
+    }
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);

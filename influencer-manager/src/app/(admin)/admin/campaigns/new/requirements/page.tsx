@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, ChevronLeft, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -136,6 +136,20 @@ export default function RequirementsPage() {
   const [follower, setFollower] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem("campaign-step2");
+    if (saved) {
+      const data = JSON.parse(saved);
+      setPlatform(data.platform ?? "");
+      setHeadcount(data.headcount ?? "");
+      setMaxSlots(data.maxSlots ?? "");
+      setFollower(data.follower ?? "");
+      setSkills(data.skills ?? []);
+      setLanguages(data.languages ?? []);
+    }
+  }, []);
 
 
   const handleNext = () => {

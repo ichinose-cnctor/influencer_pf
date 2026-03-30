@@ -61,18 +61,26 @@ export default function NewAnnouncementPage() {
 
   useEffect(() => {
     const editing = sessionStorage.getItem("announcement-editing");
+    const step1 = sessionStorage.getItem("announcement-step1");
+    
+    let data = null;
     if (editing) {
-      const data = JSON.parse(editing);
-      setEditingId(data.id);
+      data = JSON.parse(editing);
+      sessionStorage.removeItem("announcement-editing");
+    } else if (step1) {
+      data = JSON.parse(step1);
+    }
+
+    if (data) {
+      setEditingId(data.editingId ?? data.id ?? null);
       setTitle(data.title ?? "");
       setBody(data.body ?? "");
       setCategory(data.category ?? "お知らせ");
-      setTarget(data.target ?? "all");
-      setScheduleEnabled(!!data.publishDate);
+      setTarget(data.target ?? "all" as any);
+      setScheduleEnabled(!!data.publishDate || !!data.scheduleEnabled);
       setPublishDate(data.publishDate ?? "");
-      setExpiryEnabled(!!data.expiryDate);
+      setExpiryEnabled(!!data.expiryDate || !!data.expiryEnabled);
       setExpiryDate(data.expiryDate ?? "");
-      sessionStorage.removeItem("announcement-editing");
     }
   }, []);
 

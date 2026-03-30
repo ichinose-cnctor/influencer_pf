@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MarkdownPreview } from "@/components/MarkdownPreview";
 
 // ---- ステップ定義 ----
 const steps = [
@@ -174,7 +175,7 @@ export default function ConfirmPage() {
               label="プロジェクト説明"
               value={
                 step1?.description
-                  ? <span className="whitespace-pre-wrap">{step1.description}</span>
+                  ? <MarkdownPreview content={step1.description} />
                   : undefined
               }
             />
