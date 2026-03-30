@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { dashboardApi } from "@/lib/api";
+import { MarkdownPreview } from "@/components/MarkdownPreview";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,8 +24,8 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [statsRes, campaignsRes] = await Promise.all([
-          dashboardApi.stats(),
-          dashboardApi.recentCampaigns()
+          dashboardApi.getStats(),
+          dashboardApi.getRecentCampaigns()
         ]);
         setStatsData(statsRes);
         setRecentCampaigns(campaignsRes);
@@ -249,9 +250,9 @@ export default function DashboardPage() {
                         <h4 className="text-sm font-semibold text-foreground mb-1 group-hover:text-violet-600 transition-colors line-clamp-1 leading-snug">
                           {a.title}
                         </h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {a.body}
-                        </p>
+                        <div className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mt-1">
+                          <MarkdownPreview content={a.body} />
+                        </div>
                       </div>
                     </div>
                   ))}

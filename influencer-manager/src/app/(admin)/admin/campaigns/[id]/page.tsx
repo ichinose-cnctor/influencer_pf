@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { campaignApi, CampaignOut, ApplicationOut } from "@/lib/api";
+import { MarkdownPreview } from "@/components/MarkdownPreview";
 
 type Verdict = "pending" | "pass" | "fail";
 type Tab = "概要" | "応募者";
@@ -325,7 +326,9 @@ function CampaignDetailContent() {
                 <CardTitle className="text-sm font-semibold">案件説明</CardTitle>
               </CardHeader>
               <CardContent className="px-5 pb-5">
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{campaign.description || "説明はありません"}</p>
+                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                  <MarkdownPreview content={campaign.description || ""} />
+                </div>
                 {campaign.video_url && (
                   <div className="mt-4 p-3 bg-muted/30 rounded-lg flex items-center gap-2 text-xs">
                     <Youtube className="h-4 w-4 text-red-500" />
