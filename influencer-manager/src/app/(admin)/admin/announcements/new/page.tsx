@@ -96,7 +96,7 @@ export default function NewAnnouncementPage() {
       return;
     }
     sessionStorage.setItem("announcement-step1", JSON.stringify({
-      editingId, title, body, category,
+      editingId, title, body, category, target,
       scheduleEnabled, publishDate,
       expiryEnabled, expiryDate,
     }));

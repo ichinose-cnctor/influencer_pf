@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 
 from app.database import get_db
-from app.models import User, Conversation, ConversationParticipant, Message
+from app.models import User, Conversation, ConversationParticipant, Message, Notification
 from app.schemas import MessageCreate, ConversationCreate
 from app.auth import get_current_user
 
@@ -94,6 +94,21 @@ def send_message(conv_id: int, data: MessageCreate, db: Session = Depends(get_db
     conv = db.query(Conversation).filter(Conversation.id == conv_id).first()
     if conv:
         conv.updated_at = func.now()
+
+    # 通知を生成 (メッセージ通知 -> 相手へ)
+    others = db.query(ConversationParticipant).filter(
+        ConversationParticipant.conversation_id == conv_id,
+        ConversationParticipant.user_id != current_user.id,
+    ).all()
+    for other in others:
+        notif = Notification(
+            user_id=other.user_id,
+            title="新規メッセージが届きました。",
+            body=f"{current_user.name} さんからメッセージが届きました。",
+            type="message",
+            reference_id=conv_id
+        )
+        db.add(notif)
 
     db.commit()
     db.refresh(msg)

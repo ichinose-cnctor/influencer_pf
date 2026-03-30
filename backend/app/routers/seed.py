@@ -113,6 +113,7 @@ def reset_database(db: Session = Depends(get_db)):
         db.execute(text("DELETE FROM influencer_profiles"))
         db.execute(text("DELETE FROM notifications"))
         db.execute(text("DELETE FROM influencer_ratings"))
+        db.execute(text("DELETE FROM announcements"))
         
         # 管理者(role='admin')以外のユーザーを削除
         db.execute(text("DELETE FROM users WHERE role != 'admin'"))

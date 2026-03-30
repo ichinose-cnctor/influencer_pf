@@ -183,7 +183,7 @@ function CampaignDetailContent() {
               </span>
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                期限: {campaign.publish_end ? new Date(campaign.publish_end).toLocaleDateString("ja-JP") : "—"}
+                応募締切: {campaign.publish_end ? new Date(campaign.publish_end).toLocaleDateString("ja-JP") : "—"}
               </span>
               <span className="flex items-center gap-1">
                 <FileText className="h-3 w-3" />

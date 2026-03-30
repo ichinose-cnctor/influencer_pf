@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import User, InfluencerProfile
+from app.models import User, InfluencerProfile, Notification
 from app.schemas import UserRegister, UserLogin, Token, UserOut, UserUpdate
 from app.auth import get_password_hash, verify_password, create_access_token, get_current_user
 
@@ -26,6 +26,19 @@ def register(data: UserRegister, db: Session = Depends(get_db)):
     if data.role == "influencer":
         profile = InfluencerProfile(user_id=user.id)
         db.add(profile)
+        db.flush()
+
+        # 通知を生成 (新規インフルエンサー登録 -> 全管理者へ)
+        admins = db.query(User).filter(User.role == "admin").all()
+        for admin in admins:
+            notif = Notification(
+                user_id=admin.id,
+                title="新規インフルエンサーが登録しました。",
+                body=f"{user.name} さんが新しくインフルエンサーとして登録されました。",
+                type="influencer",
+                reference_id=user.id
+            )
+            db.add(notif)
 
     db.commit()
     db.refresh(user)

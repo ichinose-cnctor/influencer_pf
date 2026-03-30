@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
+import { announcementApi } from "@/lib/api";
 
 const steps = [
   { label: "お知らせの内容", href: "/admin/announcements/new", done: true },
@@ -47,34 +48,31 @@ export default function AnnouncementConfirmPage() {
     if (saved) setData(JSON.parse(saved));
   }, []);
 
-  const handlePublish = () => {
-    if (data) {
-      const existing: Record<string, unknown>[] = JSON.parse(localStorage.getItem("announcements") ?? "[]");
+  const handlePublish = async () => {
+    if (!data) return;
+
+    try {
+      const payload = {
+        title: data.title,
+        body: data.body,
+        category: data.category,
+        target: data.target,
+        publish_start: data.scheduleEnabled && data.publishDate ? data.publishDate : null,
+        publish_end: data.expiryEnabled && data.expiryDate ? data.expiryDate : null,
+      };
+
       if (data.editingId) {
-        const updated = existing.map((a) =>
-          a.id === data.editingId
-            ? { ...a, title: data.title, body: data.body, category: data.category, target: data.target,
-                publishDate: data.scheduleEnabled && data.publishDate ? data.publishDate : null,
-                expiryDate: data.expiryEnabled && data.expiryDate ? data.expiryDate : null }
-            : a
-        );
-        localStorage.setItem("announcements", JSON.stringify(updated));
+        await announcementApi.update(data.editingId, payload);
       } else {
-        const newItem = {
-          id: Date.now(),
-          title: data.title,
-          body: data.body,
-          category: data.category,
-          target: data.target,
-          publishDate: data.scheduleEnabled && data.publishDate ? data.publishDate : null,
-          expiryDate: data.expiryEnabled && data.expiryDate ? data.expiryDate : null,
-          createdAt: new Date().toISOString(),
-        };
-        localStorage.setItem("announcements", JSON.stringify([newItem, ...existing]));
+        await announcementApi.create(payload);
       }
+      
+      sessionStorage.removeItem("announcement-step1");
+      router.push("/admin/dashboard");
+    } catch (err) {
+      console.error("Failed to publish announcement", err);
+      alert("お知らせの公開に失敗しました。");
     }
-    sessionStorage.removeItem("announcement-step1");
-    router.push("/admin/dashboard");
   };
 
   return (

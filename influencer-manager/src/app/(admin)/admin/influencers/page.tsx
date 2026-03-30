@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { getCampaignCount } from "@/lib/influencer-data";
 import {
   Search,
   Star,
@@ -20,138 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/Pagination";
-
-// ---- モックデータ ----
-const influencers = [
-  {
-    id: 1,
-    name: "山田 花子",
-    handle: "@hanako_lifestyle",
-    initials: "山",
-    avatarColor: "from-pink-400 to-rose-400",
-    platform: "instagram",
-    followers: 128000,
-    engagementRate: 4.8,
-    genres: ["ホテル＆宿泊"],
-    rating: 4.9,
-    status: "空き有り",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    priceRange: "¥50,000〜",
-    registeredAt: "2025/06/01",
-  },
-  {
-    id: 2,
-    name: "鈴木 健太",
-    handle: "@kenta_fitness",
-    initials: "鈴",
-    avatarColor: "from-sky-400 to-blue-500",
-    platform: "youtube",
-    followers: 342000,
-    engagementRate: 6.2,
-    genres: ["体験＆ツアー"],
-    rating: 4.7,
-    status: "案件中",
-    statusColor: "bg-blue-100 text-blue-700",
-    priceRange: "¥80,000〜",
-    registeredAt: "2025/04/15",
-  },
-  {
-    id: 3,
-    name: "佐藤 みのり",
-    handle: "@minori_foodie",
-    initials: "佐",
-    avatarColor: "from-amber-400 to-orange-400",
-    platform: "instagram",
-    followers: 89000,
-    engagementRate: 5.5,
-    genres: ["飲食店"],
-    rating: 4.6,
-    status: "空き有り",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    priceRange: "¥30,000〜",
-    registeredAt: "2025/08/20",
-  },
-  {
-    id: 4,
-    name: "中村 咲",
-    handle: "@saki_travel",
-    initials: "中",
-    avatarColor: "from-violet-400 to-purple-500",
-    platform: "instagram",
-    followers: 215000,
-    engagementRate: 3.9,
-    genres: ["ホテル＆宿泊"],
-    rating: 4.5,
-    status: "空き有り",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    priceRange: "¥70,000〜",
-    registeredAt: "2025/03/10",
-  },
-  {
-    id: 5,
-    name: "田中 ゆい",
-    handle: "@yui_beauty",
-    initials: "田",
-    avatarColor: "from-fuchsia-400 to-pink-500",
-    platform: "youtube",
-    followers: 560000,
-    engagementRate: 7.1,
-    genres: ["飲食店"],
-    rating: 5.0,
-    status: "案件中",
-    statusColor: "bg-blue-100 text-blue-700",
-    priceRange: "¥150,000〜",
-    registeredAt: "2025/09/05",
-  },
-  {
-    id: 6,
-    name: "伊藤 大輝",
-    handle: "@daiki_tech",
-    initials: "伊",
-    avatarColor: "from-slate-400 to-gray-500",
-    platform: "youtube",
-    followers: 98000,
-    engagementRate: 4.2,
-    genres: ["体験＆ツアー"],
-    rating: 4.3,
-    status: "空き有り",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    priceRange: "¥40,000〜",
-    registeredAt: "2025/07/22",
-  },
-  {
-    id: 7,
-    name: "高橋 あおい",
-    handle: "@aoi_fashion",
-    initials: "高",
-    avatarColor: "from-teal-400 to-cyan-400",
-    platform: "instagram",
-    followers: 175000,
-    engagementRate: 5.8,
-    genres: ["ホテル＆宿泊"],
-    rating: 4.8,
-    status: "案件中",
-    statusColor: "bg-blue-100 text-blue-700",
-    priceRange: "¥60,000〜",
-    registeredAt: "2025/11/30",
-  },
-  {
-    id: 8,
-    name: "渡辺 そら",
-    handle: "@sora_outdoor",
-    initials: "渡",
-    avatarColor: "from-lime-400 to-green-500",
-    platform: "youtube",
-    followers: 62000,
-    engagementRate: 8.3,
-    genres: ["体験＆ツアー"],
-    rating: 4.4,
-    status: "空き有り",
-    statusColor: "bg-emerald-100 text-emerald-700",
-    priceRange: "¥25,000〜",
-    registeredAt: "2025/12/01",
-  },
-];
+import { influencerApi, InfluencerOut } from "@/lib/api";
 
 const genres = ["すべて", "ホテル＆宿泊", "飲食店", "体験＆ツアー"];
 const platforms = ["すべて", "Instagram", "YouTube", "TikTok"];
@@ -163,12 +31,15 @@ function formatFollowers(n: number): string {
 }
 
 function PlatformIcon({ platform }: { platform: string }) {
-  if (platform === "youtube") return <Youtube className="h-3.5 w-3.5 text-red-500" />;
+  if (platform?.toLowerCase() === "youtube") return <Youtube className="h-3.5 w-3.5 text-red-500" />;
   return <Instagram className="h-3.5 w-3.5 text-pink-500" />;
 }
 
 export default function InfluencersPage() {
   const router = useRouter();
+  const [influencers, setInfluencers] = useState<InfluencerOut[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("すべて");
   const [selectedPlatform, setSelectedPlatform] = useState("すべて");
@@ -179,20 +50,50 @@ export default function InfluencersPage() {
 
   // 評価モーダル
   const [ratingModal, setRatingModal] = useState<{ id: number; name: string } | null>(null);
-  const [ratings, setRatings] = useState<Record<number, number>>(
-    Object.fromEntries(influencers.map((inf) => [inf.id, inf.rating]))
-  );
+  const [ratings, setRatings] = useState<Record<number, number>>({});
+
+  const fetchInfluencers = async () => {
+    setLoading(true);
+    try {
+      const params: any = {
+        page: String(currentPage),
+        per_page: String(PER_PAGE),
+        sort: sortBy === "フォロワー数" ? "followers" : "登録日",
+      };
+      if (search) params.keyword = search;
+      if (selectedGenre !== "すべて") params.category = selectedGenre;
+      if (selectedPlatform !== "すべて") params.platform = selectedPlatform;
+      if (selectedStatus !== "すべて") params.status = selectedStatus;
+
+      const res = await influencerApi.list(params);
+      setInfluencers(res.items);
+      setTotal(res.total);
+
+      // Ratings
+      const rMap: Record<number, number> = {};
+      res.items.forEach(inf => {
+        rMap[inf.id] = inf.rating_avg || 0;
+      });
+      setRatings(rMap);
+    } catch (err) {
+      console.error("Failed to fetch influencers", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setRatings((prev) => {
-      const updated = { ...prev };
-      influencers.forEach((inf) => {
-        const saved = localStorage.getItem(`influencer-rating-${inf.id}`);
-        if (saved !== null) updated[inf.id] = parseFloat(saved);
-      });
-      return updated;
-    });
-  }, []);
+    fetchInfluencers();
+  }, [currentPage, sortBy, selectedGenre, selectedPlatform, selectedStatus]);
+
+  // Handle Search with debounce or simple delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchInfluencers();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const [hovered, setHovered] = useState(0);
   const [tempRating, setTempRating] = useState(0);
 
@@ -202,40 +103,18 @@ export default function InfluencersPage() {
     setRatingModal({ id, name });
   };
   const closeRatingModal = () => setRatingModal(null);
-  const saveRating = () => {
+  const saveRating = async () => {
     if (!ratingModal) return;
-    setRatings((prev) => ({ ...prev, [ratingModal.id]: tempRating }));
-    localStorage.setItem(`influencer-rating-${ratingModal.id}`, String(tempRating));
-    closeRatingModal();
+    try {
+      await influencerApi.updateRating(ratingModal.id, tempRating);
+      setRatings((prev) => ({ ...prev, [ratingModal.id]: tempRating }));
+      closeRatingModal();
+    } catch (err) {
+      alert("評価の保存に失敗しました");
+    }
   };
 
-  const filtered = influencers
-    .filter((inf) => {
-      const matchSearch =
-        inf.name.includes(search) || inf.handle.includes(search);
-      const matchGenre =
-        selectedGenre === "すべて" || inf.genres.includes(selectedGenre);
-      const matchPlatform =
-        selectedPlatform === "すべて" ||
-        (selectedPlatform === "Instagram" && inf.platform === "instagram") ||
-        (selectedPlatform === "YouTube" && inf.platform === "youtube");
-      const matchStatus =
-        selectedStatus === "すべて" || inf.status === selectedStatus;
-      return matchSearch && matchGenre && matchPlatform && matchStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === "フォロワー数") return b.followers - a.followers;
-      if (sortBy === "評価") return (ratings[b.id] ?? b.rating) - (ratings[a.id] ?? a.rating);
-      if (sortBy === "案件数") return getCampaignCount(b.id) - getCampaignCount(a.id);
-      if (sortBy === "登録日") {
-        return new Date(b.registeredAt.replace(/\//g, "-")).getTime() -
-               new Date(a.registeredAt.replace(/\//g, "-")).getTime();
-      }
-      return 0;
-    });
-
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const totalPages = Math.ceil(total / PER_PAGE);
 
   return (
     <div className="space-y-5">
@@ -338,111 +217,121 @@ export default function InfluencersPage() {
 
       {/* 件数 */}
       <p className="text-xs text-muted-foreground">
-        {filtered.length} 件のインフルエンサーが見つかりました
+        {total} 件のインフルエンサーが見つかりました
       </p>
 
       {/* カードグリッド */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-        {paginated.map((inf) => (
-          <Card
-            key={inf.id}
-            className="border border-border shadow-none hover:shadow-md hover:border-violet-200 transition-all cursor-pointer group"
-          >
-            <CardContent className="p-5">
-              {/* ヘッダー */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-12 w-12 rounded-full bg-gradient-to-br ${inf.avatarColor} flex items-center justify-center text-white text-lg font-bold shrink-0`}
-                  >
-                    {inf.initials}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <p className="text-sm font-semibold text-foreground truncate">{inf.name}</p>
-                      <PlatformIcon platform={inf.platform} />
+      {loading ? (
+        <div className="py-20 text-center text-sm text-muted-foreground">読み込み中...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          {influencers.map((inf) => {
+            const initials = inf.name ? inf.name.substring(0, 1) : "?";
+            const profile = inf.profile || {};
+            const statusColor = (profile as any).status === "案件中" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700";
+            
+            return (
+              <Card
+                key={inf.id}
+                className="border border-border shadow-none hover:shadow-md hover:border-violet-200 transition-all cursor-pointer group"
+              >
+                <CardContent className="p-5">
+                  {/* ヘッダー */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-12 w-12 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-lg font-bold shrink-0`}
+                      >
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-foreground truncate">{inf.name}</p>
+                          <PlatformIcon platform={(profile as any).platform} />
+                        </div>
+                        <p className="text-sm lg:text-[11px] text-muted-foreground">{(profile as any).handle || "@handle"}</p>
+                      </div>
                     </div>
-                    <p className="text-sm lg:text-[11px] text-muted-foreground">{inf.handle}</p>
+                    <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 shrink-0 ${statusColor}`}>
+                      {(profile as any).status || "空き有り"}
+                    </Badge>
                   </div>
-                </div>
-                <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 shrink-0 ${inf.statusColor}`}>
-                  {inf.status}
-                </Badge>
-              </div>
 
-              {/* 統計 */}
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <div className="bg-muted/50 rounded-lg p-2 text-center">
-                  <p className="text-[12px] lg:text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
-                    <Heart className="h-3 w-3" /> フォロワー
-                  </p>
-                  <p className="text-sm font-bold text-foreground mt-0.5">
-                    {formatFollowers(inf.followers)}
-                  </p>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-2 text-center">
-                  <p className="text-[12px] lg:text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
-                    <MessageCircle className="h-3 w-3" /> 案件数
-                  </p>
-                  <p className="text-sm font-bold text-foreground mt-0.5">{getCampaignCount(inf.id)}</p>
-                </div>
-              </div>
-
-              {/* ジャンルタグ */}
-              <div className="flex flex-wrap gap-1 mb-4">
-                {inf.genres.map((g) => (
-                  <span
-                    key={g}
-                    className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[12px] lg:text-[10px] font-medium"
-                  >
-                    {g}
-                  </span>
-                ))}
-              </div>
-
-              {/* フッター */}
-              <div className="flex items-center justify-between pt-3 border-t border-border">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                    <span className="text-xs font-semibold text-foreground">{ratings[inf.id] ?? inf.rating}</span>
+                  {/* 統計 */}
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <p className="text-[12px] lg:text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
+                        <Heart className="h-3 w-3" /> フォロワー
+                      </p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">
+                        {formatFollowers((profile as any).followers || 0)}
+                      </p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <p className="text-[12px] lg:text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
+                        <MessageCircle className="h-3 w-3" /> 案件数
+                      </p>
+                      <p className="text-sm font-bold text-foreground mt-0.5">{inf.campaign_count}</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <CalendarDays className="h-3 w-3" />
-                    <span className="text-sm lg:text-[11px]">{inf.registeredAt}</span>
+
+                  {/* ジャンルタグ */}
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {((profile as any).genres || []).map((g: string) => (
+                      <span
+                        key={g}
+                        className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[12px] lg:text-[10px] font-medium"
+                      >
+                        {g}
+                      </span>
+                    ))}
                   </div>
-                </div>
-                <div className="flex gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openRatingModal(inf.id, inf.name)}
-                    className="h-11 w-11 lg:h-9 lg:w-9 p-0"
-                  >
-                    <ClipboardList className="h-5 w-5 lg:h-4 lg:w-4" />
-                  </Button>
-                  <Link href={`/admin/influencers/${inf.id}`} className="flex-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-11 lg:h-9 w-full text-sm lg:text-xs px-2.5 lg:px-3"
-                    >
-                      詳細
-                    </Button>
-                  </Link>
-                  <Button
-                    size="sm"
-                    onClick={() => router.push(`/admin/messages?id=${inf.id}`)}
-                    className="flex-1 h-11 lg:h-9 text-sm lg:text-xs px-2.5 lg:px-3 bg-violet-600 hover:bg-violet-700 text-white"
-                  >
-                    メッセージ
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+
+                  {/* フッター */}
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
+                        <span className="text-xs font-semibold text-foreground">{inf.rating_avg || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <CalendarDays className="h-3 w-3" />
+                        <span className="text-sm lg:text-[11px]">{new Date(inf.created_at).toLocaleDateString("ja-JP")}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openRatingModal(inf.id, inf.name)}
+                        className="h-11 w-11 lg:h-9 lg:w-9 p-0"
+                      >
+                        <ClipboardList className="h-5 w-5 lg:h-4 lg:w-4" />
+                      </Button>
+                      <Link href={`/admin/influencers/${inf.id}`} className="flex-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-11 lg:h-9 w-full text-sm lg:text-xs px-2.5 lg:px-3"
+                        >
+                          詳細
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        onClick={() => router.push(`/admin/messages?id=${inf.id}`)}
+                        className="flex-1 h-11 lg:h-9 text-sm lg:text-xs px-2.5 lg:px-3 bg-violet-600 hover:bg-violet-700 text-white"
+                      >
+                        メッセージ
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* 評価モーダル */}
       {ratingModal && (
@@ -511,7 +400,7 @@ export default function InfluencersPage() {
         </div>
       )}
 
-      {filtered.length === 0 && (
+      {influencers.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <Search className="h-10 w-10 text-muted-foreground/40 mb-3" />
           <p className="text-sm text-muted-foreground">条件に一致するインフルエンサーが見つかりませんでした</p>

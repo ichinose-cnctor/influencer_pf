@@ -21,78 +21,70 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { influencerCampaignHistory, type CampaignHistory } from "@/lib/influencer-data";
-
-/* ─── インフルエンサーデータ ─── */
-const influencerMap: Record<string, {
-  id: number; name: string; handle: string; initials: string;
-  avatarColor: string; platform: string; followers: number;
-  engagementRate: number; genres: string[]; rating: number;
-  campaigns: number; status: string; statusColor: string;
-  bio: string;
-}> = {
-  "1": { id: 1, name: "山田 花子", handle: "@hanako_lifestyle", initials: "山", avatarColor: "from-pink-400 to-rose-400", platform: "instagram", followers: 128000, engagementRate: 4.8, genres: ["ホテル＆宿泊"], rating: 4.9, campaigns: 12, status: "空き有り", statusColor: "bg-emerald-100 text-emerald-700", bio: "旅行・ホテル・宿泊体験を中心に発信するライフスタイル系インフルエンサー。丁寧な写真とレポートが好評。" },
-  "2": { id: 2, name: "鈴木 健太", handle: "@kenta_fitness", initials: "鈴", avatarColor: "from-sky-400 to-blue-500", platform: "youtube", followers: 342000, engagementRate: 6.2, genres: ["体験＆ツアー"], rating: 4.7, campaigns: 8, status: "案件中", statusColor: "bg-blue-100 text-blue-700", bio: "アウトドア・体験ツアー専門のYouTuber。実際の体験をリアルに伝える動画で高エンゲージメントを維持。" },
-  "3": { id: 3, name: "佐藤 みのり", handle: "@minori_foodie", initials: "佐", avatarColor: "from-amber-400 to-orange-400", platform: "instagram", followers: 89000, engagementRate: 5.5, genres: ["飲食店"], rating: 4.6, campaigns: 15, status: "空き有り", statusColor: "bg-emerald-100 text-emerald-700", bio: "グルメ・飲食店レポート専門。食欲をそそる写真とリアルな口コミで飲食系案件に強みを持つ。" },
-  "4": { id: 4, name: "中村 咲", handle: "@saki_travel", initials: "中", avatarColor: "from-violet-400 to-purple-500", platform: "instagram", followers: 215000, engagementRate: 3.9, genres: ["ホテル＆宿泊"], rating: 4.5, campaigns: 20, status: "空き有り", statusColor: "bg-emerald-100 text-emerald-700", bio: "旅行・ホテル・リゾートを中心に国内外の宿泊施設を紹介。フォロワー層は20〜40代女性が中心。" },
-  "5": { id: 5, name: "田中 ゆい", handle: "@yui_beauty", initials: "田", avatarColor: "from-fuchsia-400 to-pink-500", platform: "youtube", followers: 560000, engagementRate: 7.1, genres: ["飲食店"], rating: 5.0, campaigns: 31, status: "案件中", statusColor: "bg-blue-100 text-blue-700", bio: "グルメ・飲食特化のYouTuber。新店舗レポートや話題グルメの動画が毎回高再生数を記録。" },
-  "6": { id: 6, name: "伊藤 大輝", handle: "@daiki_tech", initials: "伊", avatarColor: "from-slate-400 to-gray-500", platform: "youtube", followers: 98000, engagementRate: 4.2, genres: ["体験＆ツアー"], rating: 4.3, campaigns: 6, status: "空き有り", statusColor: "bg-emerald-100 text-emerald-700", bio: "体験型アクティビティ・ツアーを得意とするYouTuber。丁寧な解説と臨場感ある映像が特徴。" },
-  "7": { id: 7, name: "高橋 あおい", handle: "@aoi_fashion", initials: "高", avatarColor: "from-teal-400 to-cyan-400", platform: "instagram", followers: 175000, engagementRate: 5.8, genres: ["ホテル＆宿泊"], rating: 4.8, campaigns: 18, status: "案件中", statusColor: "bg-blue-100 text-blue-700", bio: "ラグジュアリーホテル・高級旅館を専門とするInstagramer。フォトジェニックな投稿で人気。" },
-  "8": { id: 8, name: "渡辺 そら", handle: "@sora_outdoor", initials: "渡", avatarColor: "from-lime-400 to-green-500", platform: "youtube", followers: 62000, engagementRate: 8.3, genres: ["体験＆ツアー"], rating: 4.4, campaigns: 4, status: "空き有り", statusColor: "bg-emerald-100 text-emerald-700", bio: "自然・アウトドア体験に特化したYouTuber。エンゲージメント率が高く、熱心なファンコミュニティを持つ。" },
-};
-
+import { influencerApi, InfluencerOut, CampaignHistory } from "@/lib/api";
 
 function formatFollowers(n: number): string {
-  return `${(n / 10000).toFixed(1)}万`;
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}万`;
+  return String(n);
 }
 
 function PlatformIcon({ platform }: { platform: string }) {
-  if (platform === "youtube") return <Youtube className="h-4 w-4 text-red-500" />;
+  if (platform?.toLowerCase() === "youtube") return <Youtube className="h-4 w-4 text-red-500" />;
   return <Instagram className="h-4 w-4 text-pink-500" />;
 }
 
-const statusOrder = { "進行中": 0, "応募中": 1, "完了": 2 };
+const statusOrder: Record<string, number> = { "進行中": 0, "応募中": 1, "完了": 2 };
 
 export default function InfluencerDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = String(params?.id ?? "1");
-  const inf = influencerMap[id] ?? influencerMap["1"];
-  const history = (influencerCampaignHistory[id] ?? []).sort(
-    (a, b) => statusOrder[a.status] - statusOrder[b.status]
-  );
+  const id = parseInt(params?.id as string);
 
-  const activeCount = history.filter((c) => c.status === "進行中" || c.status === "応募中").length;
-  const doneCount = history.filter((c) => c.status === "完了").length;
-  const totalCount = history.filter((c) => c.status === "完了" || c.status === "進行中").length;
+  const [inf, setInf] = useState<InfluencerOut | null>(null);
+  const [history, setHistory] = useState<CampaignHistory[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [memo, setMemo] = useState("");
   const [savedMemo, setSavedMemo] = useState("");
   const [memoEditing, setMemoEditing] = useState(false);
 
-  const [rating, setRating] = useState(() => {
-    if (typeof window === "undefined") return Math.round(inf.rating);
-    const saved = localStorage.getItem(`influencer-rating-${id}`);
-    return saved !== null ? parseInt(saved) : Math.round(inf.rating);
-  });
+  const [rating, setRating] = useState(0);
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [ratingHovered, setRatingHovered] = useState(0);
   const [ratingTemp, setRatingTemp] = useState(0);
 
   useEffect(() => {
-    const saved = localStorage.getItem(`influencer-rating-${id}`);
-    if (saved !== null) setRating(parseInt(saved));
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await influencerApi.get(id);
+        setInf(data);
+        setHistory(data.campaign_history || []);
+        setRating(data.rating_avg || 0);
+        setMemo(data.profile?.admin_memo || "");
+        setSavedMemo(data.profile?.admin_memo || "");
+      } catch (err) {
+        console.error("Failed to fetch influencer detail", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchData();
   }, [id]);
 
   const openRatingModal = () => { setRatingTemp(rating); setRatingHovered(0); setRatingModalOpen(true); };
   const closeRatingModal = () => setRatingModalOpen(false);
-  const saveRating = () => {
-    setRating(ratingTemp);
-    localStorage.setItem(`influencer-rating-${id}`, String(ratingTemp));
-    setRatingModalOpen(false);
+  const saveRating = async () => {
+    try {
+      await influencerApi.updateRating(id, ratingTemp);
+      setRating(ratingTemp);
+      setRatingModalOpen(false);
+    } catch (err) {
+      alert("評価の保存に失敗しました");
+    }
   };
 
-  const handleMemoSave = () => {
+  const handleMemoSave = async () => {
     setSavedMemo(memo);
     setMemoEditing(false);
   };
@@ -100,6 +92,17 @@ export default function InfluencerDetailPage() {
     setMemo(savedMemo);
     setMemoEditing(false);
   };
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground font-medium">読み込み中...</div>;
+  if (!inf) return <div className="p-8 text-center text-muted-foreground font-medium">インフルエンサーが見つかりません</div>;
+
+  const profile = inf.profile || {};
+  const initials = inf.name ? inf.name.substring(0, 1) : "?";
+  const statusColor = (profile as any).status === "案件中" ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700";
+
+  const activeCount = history.filter((c) => c.status === "進行中" || c.status === "応募中").length;
+  const doneCount = history.filter((c) => c.status === "完了").length;
+  const totalCount = history.filter((c) => c.status === "完了" || c.status === "進行中").length;
 
   return (
     <>
@@ -129,22 +132,22 @@ export default function InfluencerDetailPage() {
               </Button>
 
               {/* アバター */}
-              <div className={`h-16 w-16 rounded-full bg-gradient-to-br ${inf.avatarColor} flex items-center justify-center text-white text-2xl font-bold shrink-0`}>
-                {inf.initials}
+              <div className={`h-16 w-16 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-2xl font-bold shrink-0`}>
+                {initials}
               </div>
 
               {/* 名前・基本情報 */}
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <h2 className="text-xl font-bold text-foreground">{inf.name}</h2>
-                  <PlatformIcon platform={inf.platform} />
-                  <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 ${inf.statusColor}`}>
-                    {inf.status}
+                  <PlatformIcon platform={(profile as any).platform} />
+                  <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 ${statusColor}`}>
+                    {(profile as any).status || "空き有り"}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{inf.handle}</p>
+                <p className="text-sm text-muted-foreground mb-2">{(profile as any).handle || "@handle"}</p>
                 <div className="flex flex-wrap gap-1">
-                  {inf.genres.map((g) => (
+                  {((profile as any).genres || []).map((g: string) => (
                     <span key={g} className="px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-sm lg:text-[11px] font-medium">
                       {g}
                     </span>
@@ -169,7 +172,7 @@ export default function InfluencerDetailPage() {
               <p className="text-[11px] lg:text-[11px] text-muted-foreground flex items-center justify-center gap-0.5 mb-1 whitespace-nowrap">
                 <Heart className="h-3 w-3 shrink-0" /> フォロワー
               </p>
-              <p className="text-lg font-bold text-foreground">{formatFollowers(inf.followers)}</p>
+              <p className="text-lg font-bold text-foreground">{formatFollowers((profile as any).followers || 0)}</p>
             </div>
             <div className="bg-muted/50 rounded-xl p-2 lg:p-3 text-center">
               <p className="text-[11px] lg:text-[11px] text-muted-foreground flex items-center justify-center gap-0.5 mb-1 whitespace-nowrap">
@@ -272,14 +275,16 @@ export default function InfluencerDetailPage() {
                 }`;
                 const inner = (
                   <>
-                    {/* サムネイル */}
-                    <div className={`h-12 w-16 rounded-lg bg-gradient-to-br ${c.imageColor} shrink-0`} />
+                    {/* サムネイル代わりのアイコン */}
+                    <div className={`h-12 w-16 rounded-lg bg-muted flex items-center justify-center shrink-0`}>
+                      <Briefcase className="h-6 w-6 text-muted-foreground/40" />
+                    </div>
 
                     {/* メイン情報 */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                         <p className="text-sm font-semibold text-foreground truncate">{c.title}</p>
-                        <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 shrink-0 ${c.statusColor}`}>
+                        <Badge className={`text-[12px] lg:text-[10px] px-2 py-0.5 border-0 shrink-0 bg-muted text-muted-foreground`}>
                           {c.status}
                         </Badge>
                       </div>
@@ -295,25 +300,17 @@ export default function InfluencerDetailPage() {
                     <div className="shrink-0 flex items-center gap-2">
                       {c.status === "完了" ? (
                         <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      ) : c.status === "進行中" ? (
-                        <Clock className="h-5 w-5 text-blue-500" />
                       ) : (
-                        <Clock className="h-5 w-5 text-amber-500" />
+                        <Clock className="h-5 w-5 text-blue-500" />
                       )}
-                      {c.campaignId && (
-                        <ChevronRight className="h-4 w-4 text-violet-400" />
-                      )}
+                      <ChevronRight className="h-4 w-4 text-violet-400" />
                     </div>
                   </>
                 );
-                return c.campaignId ? (
-                  <Link key={c.id} href={`/admin/campaigns/${c.campaignId}`} className={`${rowClass} cursor-pointer`}>
+                return (
+                  <Link key={c.id} href={`/admin/campaigns/${c.campaign_id}`} className={`${rowClass} cursor-pointer`}>
                     {inner}
                   </Link>
-                ) : (
-                  <div key={c.id} className={rowClass}>
-                    {inner}
-                  </div>
                 );
               })}
             </div>

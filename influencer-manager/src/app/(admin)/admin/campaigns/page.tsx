@@ -291,7 +291,7 @@ function CampaignsContent() {
                       </div>
                       <div className="bg-muted/50 rounded-lg p-2 text-center">
                         <p className="text-[12px] lg:text-[10px] text-muted-foreground flex items-center justify-center gap-0.5">
-                          <Calendar className="h-3 w-3" /> 締切
+                          <Calendar className="h-3 w-3" /> 応募締切
                         </p>
                         <p className="text-sm font-bold text-foreground mt-0.5">
                           {c.publish_end ? new Date(c.publish_end).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" }) : "—"}

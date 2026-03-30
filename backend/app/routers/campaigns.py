@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from app.database import get_db
-from app.models import Campaign, Application, User
+from app.models import Campaign, Application, User, Notification
 from app.schemas import (
     CampaignCreate, CampaignUpdate, CampaignOut, CampaignStatusUpdate,
     ApplicationCreate, ApplicationOut, ApplicationVerdictUpdate,
@@ -181,6 +181,18 @@ def apply_to_campaign(campaign_id: int, data: ApplicationCreate, db: Session = D
     db.add(app)
     db.commit()
     db.refresh(app)
+
+    # 通知を生成 (応募通知 -> 管理者へ)
+    notif = Notification(
+        user_id=campaign.created_by,
+        title=f"案件『{campaign.title}』に新規応募がありました。",
+        body=f"インフルエンサー {current_user.name} さんから応募が届きました。",
+        type="application",
+        reference_id=campaign.id
+    )
+    db.add(notif)
+    db.commit()
+
     return {col.name: getattr(app, col.name) for col in Application.__table__.columns}
 
 
@@ -194,4 +206,21 @@ def update_application_verdict(campaign_id: int, app_id: int, data: ApplicationV
     app.verdict = data.verdict
     db.commit()
     db.refresh(app)
+
+    # 通知を生成 (合否通知 -> インフルエンサーへ)
+    if data.verdict in ("pass", "fail"):
+        status_text = "採用されました！" if data.verdict == "pass" else "不採用となりました。"
+        campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+        title = f"案件『{campaign.title}』の選考結果" if campaign else "選考結果のご案内"
+        
+        notif = Notification(
+            user_id=app.influencer_id,
+            title=title,
+            body=f"ご応募いただいた案件の選考結果、{status_text}",
+            type="application",
+            reference_id=campaign_id
+        )
+        db.add(notif)
+        db.commit()
+
     return {col.name: getattr(app, col.name) for col in Application.__table__.columns}

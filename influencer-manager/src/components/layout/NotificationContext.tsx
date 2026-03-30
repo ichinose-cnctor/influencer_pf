@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { notificationApi } from "@/lib/api";
 
 export type NotificationType = "influencer" | "application" | "message" | "cancellation";
 
@@ -12,33 +13,47 @@ export interface Notification {
   read: boolean;
 }
 
-const INITIAL_NOTIFICATIONS: Notification[] = [
-  { id: 1, type: "influencer", title: "新規インフルエンサーが登録しました。", date: "2026/03/13", read: false },
-  { id: 2, type: "application", title: "案件『春の美容コスメPR』に新規応募がありました。", date: "2026/03/12", read: false },
-  { id: 3, type: "message", title: "新規メッセージが届きました。", date: "2026/03/12", read: false },
-  { id: 7, type: "cancellation", title: "案件「春の美容コスメPR」の応募にキャンセルがありました。", date: "2026/03/13", read: false },
-  { id: 4, type: "influencer", title: "新規インフルエンサーが登録しました。", date: "2026/03/11", read: true },
-  { id: 5, type: "application", title: "案件『夏のスキンケアPR』に新規応募がありました。", date: "2026/03/10", read: true },
-  { id: 6, type: "message", title: "新規メッセージが届きました。", date: "2026/03/09", read: true },
-];
-
 interface NotificationContextValue {
   open: boolean;
   setOpen: (v: boolean) => void;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
   unreadCount: number;
+  refreshNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const refreshNotifications = async () => {
+    try {
+      const data = await notificationApi.list();
+      const mapped: Notification[] = data.map((n) => ({
+        id: n.id,
+        type: (n.type as NotificationType) || "application",
+        title: n.title,
+        date: new Date(n.created_at).toLocaleDateString("ja-JP"),
+        read: n.is_read,
+      }));
+      setNotifications(mapped);
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  useEffect(() => {
+    refreshNotifications();
+    // Refresh every 60s for "real-time" feel
+    const interval = setInterval(refreshNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <NotificationContext.Provider value={{ open, setOpen, notifications, setNotifications, unreadCount }}>
+    <NotificationContext.Provider value={{ open, setOpen, notifications, setNotifications, unreadCount, refreshNotifications }}>
       {children}
     </NotificationContext.Provider>
   );

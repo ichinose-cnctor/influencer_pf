@@ -36,6 +36,11 @@ def run_migrations():
     migrations = [
         # max_slots: 定員数（承認済み応募がこの数に達すると進行中へ自動遷移）
         "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS max_slots INTEGER;",
+        # 会社情報統合
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS client_name VARCHAR(255);",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS client_address VARCHAR(255);",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS client_website VARCHAR(255);",
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS client_business_description TEXT;",
     ]
     try:
         with engine.connect() as conn:

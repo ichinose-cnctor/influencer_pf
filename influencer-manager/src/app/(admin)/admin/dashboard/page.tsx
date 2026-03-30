@@ -7,7 +7,7 @@ import { Users, Briefcase, Megaphone, ArrowUpRight, Clock, CheckCircle2, Bell, P
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi, announcementApi } from "@/lib/api";
 import { MarkdownPreview } from "@/components/MarkdownPreview";
 
 export default function DashboardPage() {
@@ -23,12 +23,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, campaignsRes] = await Promise.all([
+        const [statsRes, campaignsRes, announcementsRes] = await Promise.all([
           dashboardApi.getStats(),
-          dashboardApi.getRecentCampaigns()
+          dashboardApi.getRecentCampaigns(),
+          announcementApi.list()
         ]);
         setStatsData(statsRes);
         setRecentCampaigns(campaignsRes);
+        setAnnouncements(announcementsRes);
       } catch (err) {
         console.error("Dashboard data fetch failed", err);
       } finally {
@@ -36,10 +38,6 @@ export default function DashboardPage() {
       }
     };
     fetchData();
-
-    // LocalStorage announcements
-    const saved = localStorage.getItem("announcements");
-    if (saved) setAnnouncements(JSON.parse(saved));
   }, []);
 
   if (loading) {
@@ -236,7 +234,7 @@ export default function DashboardPage() {
                             {a.category}
                           </Badge>
                           <span className="text-[10px] text-muted-foreground shrink-0 uppercase tracking-wider font-medium">
-                            {new Date(a.createdAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
+                            {new Date(a.created_at || a.createdAt).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -260,10 +258,12 @@ export default function DashboardPage() {
               )}
               {announcements.length > 0 && (
                 <div className="p-3 border-t border-border/50 bg-muted/10">
-                  <button className="w-full text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center justify-center gap-1 py-1 rounded-lg hover:bg-violet-50 transition-colors">
-                    すべて確認する
-                    <ChevronRight className="h-3 w-3" />
-                  </button>
+                  <Link href="/admin/announcements">
+                    <button className="w-full text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center justify-center gap-1 py-1 rounded-lg hover:bg-violet-50 transition-colors">
+                      すべて確認する
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </Link>
                 </div>
               )}
             </CardContent>
