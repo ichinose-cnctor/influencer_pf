@@ -55,7 +55,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="levgo_sns@cnctor.jp"
+                placeholder="admin@example.com"
                 className="w-full rounded-lg border border-input bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
               />
             </div>
@@ -79,11 +79,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo credentials */}
-          <div className="text-center text-xs text-muted-foreground space-y-1 pt-2 border-t border-border">
-            <p className="font-medium">アクセスアカウント</p>
-            <p>levgo_sns@cnctor.jp / D2&oE#bV9n</p>
-          </div>
         </div>
       </div>
     </div>
