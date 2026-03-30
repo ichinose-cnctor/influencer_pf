@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -36,6 +36,28 @@ export default function NewAnnouncementPage() {
   const [expiryEnabled, setExpiryEnabled] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
   const [target, setTarget] = useState("all");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyStyle = (prefix: string, suffix: string = "") => {
+    const el = textareaRef.current;
+    if (!el) return;
+
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const text = el.value;
+    const selectedText = text.substring(start, end);
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+
+    const newText = before + prefix + selectedText + suffix + after;
+    setBody(newText);
+
+    // フォーカスを戻して選択範囲を調整
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
 
   useEffect(() => {
     const editing = sessionStorage.getItem("announcement-editing");
@@ -162,36 +184,45 @@ export default function NewAnnouncementPage() {
               </button>
             ))}
             <div className="w-px h-4 bg-border mx-1" />
-            <select className="text-xs bg-transparent border-none outline-none text-muted-foreground cursor-pointer">
+            <select
+              className="text-xs bg-transparent border-none outline-none text-muted-foreground cursor-pointer"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "見出し 1") applyStyle("### ", "\n");
+                if (val === "見出し 2") applyStyle("#### ", "\n");
+                e.target.value = "Paragraph";
+              }}
+            >
               <option>Paragraph</option>
               <option>見出し 1</option>
               <option>見出し 2</option>
             </select>
             <div className="w-px h-4 bg-border mx-1" />
-            {[
-              { icon: Bold, label: "太字" },
-              { icon: Italic, label: "斜体" },
-            ].map(({ icon: Icon, label }) => (
-              <button key={label} title={label} className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
-              </button>
-            ))}
+            <button
+              onClick={() => applyStyle("**", "**")}
+              type="button" title="太字" className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground"
+            >
+              <Bold className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => applyStyle("*", "*")}
+              type="button" title="斜体" className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground"
+            >
+              <Italic className="h-3.5 w-3.5" />
+            </button>
             <div className="w-px h-4 bg-border mx-1" />
-            {[
-              { icon: AlignLeft, label: "左揃え" },
-              { icon: AlignCenter, label: "中央揃え" },
-              { icon: AlignRight, label: "右揃え" },
-              { icon: List, label: "リスト" },
-            ].map(({ icon: Icon, label }) => (
-              <button key={label} title={label} className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground">
-                <Icon className="h-3.5 w-3.5" />
-              </button>
-            ))}
+            <button
+              onClick={() => applyStyle("- ", "")}
+              type="button" title="リスト" className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground"
+            >
+              <List className="h-3.5 w-3.5" />
+            </button>
             <button className="p-1.5 rounded hover:bg-accent transition-colors text-muted-foreground ml-auto">
               <MoreHorizontal className="h-3.5 w-3.5" />
             </button>
           </div>
           <textarea
+            ref={textareaRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder="お知らせの内容を入力してください"
