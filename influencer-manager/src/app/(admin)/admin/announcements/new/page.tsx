@@ -239,6 +239,31 @@ export default function NewAnnouncementPage() {
           />
         </div>
 
+        {/* 送信対象 */}
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-foreground">送信対象</label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "all", label: "全インフルエンサー" },
+              { id: "active", label: "進行中の案件のみ" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTarget(t.id as any)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                  target === t.id
+                    ? "bg-violet-600 text-white"
+                    : "bg-muted text-muted-foreground hover:bg-accent"
+                )}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 公開日時 */}
         <div className="space-y-3">
           <label className="text-sm font-medium text-foreground">公開日時</label>
