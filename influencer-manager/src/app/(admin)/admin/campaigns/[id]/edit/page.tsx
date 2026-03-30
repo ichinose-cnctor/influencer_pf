@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -17,27 +17,11 @@ import {
   CheckCircle2,
   Gift,
   Banknote,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const campaignDataMap: Record<string, {
-  title: string;
-  rewardStyle: "gifting" | "paid";
-  budget: string;
-  genre: string;
-  area: string;
-  country: string;
-}> = {
-  "1": { title: "高級旅館 宿泊体験 PR キャンペーン", rewardStyle: "paid", budget: "380000", genre: "ホテル＆宿泊", area: "関東", country: "日本" },
-  "2": { title: "新オープン レストラン インスタ投稿", rewardStyle: "paid", budget: "150000", genre: "飲食店", area: "関西", country: "日本" },
-  "3": { title: "地方体験ツアー 動画レビュー", rewardStyle: "paid", budget: "220000", genre: "体験＆ツアー", area: "全国", country: "日本" },
-  "4": { title: "オーガニックカフェ SNS 企画", rewardStyle: "gifting", budget: "", genre: "飲食店", area: "関東", country: "日本" },
-  "5": { title: "冒険ツアー TikTok PR", rewardStyle: "paid", budget: "200000", genre: "体験＆ツアー", area: "北海道・東北", country: "日本" },
-  "6": { title: "グランピング体験 YouTube レビュー", rewardStyle: "gifting", budget: "", genre: "体験＆ツアー", area: "関東", country: "日本" },
-  "7": { title: "こだわり居酒屋 SNS キャンペーン", rewardStyle: "gifting", budget: "", genre: "飲食店", area: "九州・沖縄", country: "日本" },
-  "8": { title: "デザインホテル インフルエンサー PR", rewardStyle: "paid", budget: "180000", genre: "ホテル＆宿泊", area: "関東", country: "日本" },
-};
+import { campaignApi } from "@/lib/api";
 
 const genreOptions = ["ホテル＆宿泊", "飲食店", "体験＆ツアー"];
 const areaOptions = ["全国", "関東", "関西", "東海", "九州・沖縄", "北海道・東北", "中国・四国", "海外"];
@@ -46,45 +30,112 @@ const countryOptions = ["日本", "アメリカ", "韓国", "中国", "台湾", 
 export default function EditCampaignPage() {
   const params = useParams();
   const router = useRouter();
-  const id = (params?.id as string) ?? "1";
-  const base = campaignDataMap[id] ?? campaignDataMap["1"];
+  const idStr = params?.id as string;
+  const id = parseInt(idStr);
 
-  const [title, setTitle] = useState(base.title);
-  const [rewardStyle, setRewardStyle] = useState<"gifting" | "paid">(base.rewardStyle);
-  const [minBudget, setMinBudget] = useState(base.rewardStyle === "paid" ? base.budget : "");
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [rewardStyle, setRewardStyle] = useState<"gifting" | "paid">("gifting");
+  const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
   const [publishStart, setPublishStart] = useState("");
   const [publishEnd, setPublishEnd] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [genre, setGenre] = useState(base.genre);
-  const [area, setArea] = useState(base.area);
-  const [country, setCountry] = useState(base.country);
+  const [genre, setGenre] = useState("");
+  const [area, setArea] = useState("");
+  const [country, setCountry] = useState("");
   const [description, setDescription] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [maxSlots, setMaxSlots] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+      try {
+        const data = await campaignApi.get(id);
+        setTitle(data.title);
+        setRewardStyle((data.reward_style as "gifting" | "paid") || "gifting");
+        setMinBudget(String(data.min_budget || ""));
+        setMaxBudget(String(data.max_budget || ""));
+        setPublishStart(data.publish_start?.split("T")[0] || "");
+        setPublishEnd(data.publish_end?.split("T")[0] || "");
+        setStartDate(data.start_date?.split("T")[0] || "");
+        setEndDate(data.end_date?.split("T")[0] || "");
+        setGenre(data.category || "");
+        setArea(data.area || "");
+        setCountry(data.country || "");
+        setDescription(data.description || "");
+        setVideoUrl(data.video_url || "");
+        // backend models/schemas need to support max_slots in CampaignOut
+        setMaxSlots(String((data as any).max_slots || ""));
+      } catch (err) {
+        console.error("Failed to fetch campaign", err);
+        alert("データの取得に失敗しました");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length > 0) setUploadedFiles((prev) => [...prev, ...files]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) {
       alert("案件名を入力してください");
       return;
     }
-    setSaved(true);
-    setTimeout(() => {
-      router.push(`/admin/campaigns/${id}`);
-    }, 800);
+    setSaving(true);
+    try {
+      const payload = {
+        title,
+        reward_style: rewardStyle,
+        min_budget: minBudget ? parseInt(minBudget) : 0,
+        max_budget: maxBudget ? parseInt(maxBudget) : 0,
+        publish_start: publishStart || null,
+        publish_end: publishEnd || null,
+        start_date: startDate || null,
+        end_date: endDate || null,
+        category: genre || null,
+        area: area || null,
+        country: country || null,
+        description: description || null,
+        video_url: videoUrl || null,
+        max_slots: maxSlots ? parseInt(maxSlots) : null,
+      };
+      await campaignApi.update(id, payload);
+      setSaved(true);
+      setTimeout(() => {
+        router.push(`/admin/campaigns/${id}`);
+      }, 800);
+    } catch (err) {
+      console.error("Failed to update campaign", err);
+      alert("保存に失敗しました");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <Loader2 className="h-8 w-8 text-violet-600 animate-spin" />
+        <p className="text-sm text-muted-foreground">読み込み中...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl w-full space-y-8 pb-32">
-      {/* パンくず & 戻るボタン */}
+      {/* パンくど & 戻るボタン */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <button
           onClick={() => router.push("/admin/campaigns")}
@@ -94,7 +145,7 @@ export default function EditCampaignPage() {
           プロジェクト一覧
         </button>
         <span>/</span>
-        <span className="text-foreground font-medium truncate">{base.title}</span>
+        <span className="text-foreground font-medium truncate">{title}</span>
         <span>/</span>
         <span className="text-foreground">編集</span>
       </div>
@@ -286,6 +337,20 @@ export default function EditCampaignPage() {
             {countryOptions.map((o) => <option key={o} value={o}>{o}</option>)}
           </select>
         </div>
+
+        {/* 定員数 (NEW) */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground">定員数</label>
+          <input
+            type="number"
+            value={maxSlots}
+            onChange={(e) => setMaxSlots(e.target.value)}
+            placeholder="例: 3"
+            min={1}
+            className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background text-foreground"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">※この人数が合格すると自動で「進行中」になります</p>
+        </div>
       </div>
 
       {/* プロジェクト説明 */}
@@ -415,10 +480,15 @@ export default function EditCampaignPage() {
 
         <Button
           onClick={handleSave}
-          disabled={saved}
+          disabled={saved || saving}
           className="h-10 px-8 text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white gap-2 rounded-full disabled:opacity-80"
         >
-          {saved ? (
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              保存中...
+            </>
+          ) : saved ? (
             <>
               <CheckCircle2 className="h-4 w-4" />
               保存しました
