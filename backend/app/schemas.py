@@ -91,6 +91,7 @@ class CampaignCreate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     headcount: Optional[str] = None
+    max_slots: Optional[int] = None
     min_followers: Optional[str] = None
     required_skills: Optional[list[str]] = None
     required_languages: Optional[list[str]] = None
@@ -124,6 +125,7 @@ class CampaignOut(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     headcount: Optional[str] = None
+    max_slots: Optional[int] = None
     min_followers: Optional[str] = None
     required_skills: Optional[list[str]] = None
     required_languages: Optional[list[str]] = None

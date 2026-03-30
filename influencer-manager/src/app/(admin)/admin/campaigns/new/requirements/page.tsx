@@ -132,6 +132,7 @@ export default function RequirementsPage() {
 
   const [platform, setPlatform] = useState("");
   const [headcount, setHeadcount] = useState("");
+  const [maxSlots, setMaxSlots] = useState("");
   const [follower, setFollower] = useState("");
   const [skills, setSkills] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
@@ -139,7 +140,7 @@ export default function RequirementsPage() {
 
   const handleNext = () => {
     sessionStorage.setItem("campaign-step2", JSON.stringify({
-      platform, headcount, follower, skills, languages,
+      platform, headcount, maxSlots, follower, skills, languages,
     }));
     router.push("/admin/campaigns/new/confirm");
   };
@@ -224,18 +225,35 @@ export default function RequirementsPage() {
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">
-                フォロワー数 <span className="text-rose-500">*</span>
+                定員数（進行中への切替基準）
               </label>
-              <select
-                value={follower}
-                onChange={(e) => setFollower(e.target.value)}
-                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background appearance-none text-foreground"
-              >
-                <option value="">希望するフォロワー数を選択してください...</option>
-                {followerOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <input
+                type="number"
+                min={1}
+                value={maxSlots}
+                onChange={(e) => setMaxSlots(e.target.value)}
+                placeholder="例: 3"
+                className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background text-foreground"
+              />
+              <p className="text-[11px] text-muted-foreground">応募者がこの人数に達すると自動で「進行中」に切り替わります</p>
             </div>
           </div>
+
+          {/* フォロワー数 */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">
+              フォロワー数 <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={follower}
+              onChange={(e) => setFollower(e.target.value)}
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 transition bg-background appearance-none text-foreground"
+            >
+              <option value="">希望するフォロワー数を選択してください...</option>
+              {followerOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+
 
           {/* 必要なスキル */}
           <div className="space-y-1.5">

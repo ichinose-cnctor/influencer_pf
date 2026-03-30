@@ -34,6 +34,7 @@ interface Step1Data {
 interface Step2Data {
   platform: string;
   headcount: string;
+  maxSlots: string;
   follower: string;
   skills: string[];
   languages: string[];
@@ -83,6 +84,7 @@ export default function ConfirmPage() {
           video_url: step1.videoUrl,
           platform: step2?.platform || null,
           headcount: step2?.headcount || null,
+          max_slots: step2?.maxSlots ? parseInt(step2.maxSlots, 10) : null,
           min_followers: step2?.follower || null,
           required_skills: step2?.skills || [],
           required_languages: step2?.languages || [],
@@ -202,6 +204,10 @@ export default function ConfirmPage() {
           <div className="px-5">
             <Row label="プラットフォーム" value={step2?.platform} />
             <Row label="採用予定人数" value={step2?.headcount} />
+            <Row
+              label="定員数"
+              value={step2?.maxSlots ? `${step2.maxSlots}名（定員到達で進行中へ自動切替）` : undefined}
+            />
             <Row label="フォロワー数" value={step2?.follower} />
             <Row label="必要なスキル" value={step2?.skills?.join("、")} />
             <Row label="対応言語" value={step2?.languages?.join("、")} />

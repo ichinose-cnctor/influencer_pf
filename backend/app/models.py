@@ -74,6 +74,7 @@ class Campaign(Base):
     start_date = Column(Date)
     end_date = Column(Date)
     headcount = Column(String(20))
+    max_slots = Column(Integer)  # 採用定員数（整数）：定員到達で進行中に自動遷移
     min_followers = Column(String(30))
     required_skills = Column(ARRAY(Text))
     required_languages = Column(ARRAY(Text))

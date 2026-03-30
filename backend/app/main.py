@@ -1,5 +1,6 @@
 import time
 import logging
+import sqlalchemy
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends
@@ -30,9 +31,26 @@ def init_db(retries: int = 5, delay: int = 3):
                 logger.warning(f"Could not initialize DB after {retries} attempts: {e}. App will start without auto-migration.")
 
 
+def run_migrations():
+    """既存テーブルへの列追加など、create_all では対応できないマイグレーションを実行する。"""
+    migrations = [
+        # max_slots: 定員数（承認済み応募がこの数に達すると進行中へ自動遷移）
+        "ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS max_slots INTEGER;",
+    ]
+    try:
+        with engine.connect() as conn:
+            for sql in migrations:
+                conn.execute(sqlalchemy.text(sql))
+                logger.info(f"Migration OK: {sql.strip()}")
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"Migration skipped or failed (non-fatal): {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    run_migrations()
     yield
 
 

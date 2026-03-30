@@ -14,10 +14,38 @@ from app.auth import get_current_user, require_admin
 router = APIRouter(prefix="/api/campaigns", tags=["Campaigns"])
 
 
+def _compute_status(c: Campaign, approved_count: int) -> str:
+    """
+    ステータス自動判定:
+    - 完了: DBに完了が設定されている場合そのまま
+    - 進行中: max_slots が設定されており、承認済み(pass)応募数 >= max_slots
+    - 募集中: それ以外（募集期間内かつ定員未達）
+    """
+    from datetime import date as date_type
+    if c.status == "完了":
+        return "完了"
+    # 定員チェック: 承認済み応募数が定員に達したら進行中へ
+    if c.max_slots and approved_count >= c.max_slots:
+        return "進行中"
+    # 募集期間チェック（publish_end が過去なら完了扱い）
+    if c.publish_end and c.publish_end < date_type.today():
+        return "完了"
+    return "募集中"
+
+
 def _campaign_to_out(c: Campaign, db: Session) -> dict:
     data = {col.name: getattr(c, col.name) for col in Campaign.__table__.columns}
-    data["applicant_count"] = db.query(func.count(Application.id)).filter(Application.campaign_id == c.id).scalar() or 0
+    # 全応募数（表示用）
+    applicant_count = db.query(func.count(Application.id)).filter(Application.campaign_id == c.id).scalar() or 0
+    # 承認済み応募数（ステータス自動判定用）
+    approved_count = db.query(func.count(Application.id)).filter(
+        Application.campaign_id == c.id,
+        Application.verdict == "pass",
+    ).scalar() or 0
+    data["applicant_count"] = applicant_count
+    data["status"] = _compute_status(c, approved_count)
     return data
+
 
 
 @router.get("")
