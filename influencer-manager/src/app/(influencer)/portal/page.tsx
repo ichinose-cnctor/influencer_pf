@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Briefcase, DollarSign, Star, TrendingUp, Loader2, Calendar } from "lucide-react";
