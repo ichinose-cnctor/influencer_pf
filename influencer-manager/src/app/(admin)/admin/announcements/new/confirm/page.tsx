@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MarkdownPreview } from "@/components/MarkdownPreview";
 
 const steps = [
   { label: "お知らせの内容", href: "/admin/announcements/new", done: true },
@@ -135,7 +136,7 @@ export default function AnnouncementConfirmPage() {
               label="本文"
               value={
                 data?.body
-                  ? <span className="whitespace-pre-wrap">{data.body}</span>
+                  ? <MarkdownPreview content={data.body} />
                   : undefined
               }
             />
