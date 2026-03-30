@@ -158,29 +158,3 @@ def update_influencer_profile(
     db.refresh(profile)
     return {col.name: getattr(profile, col.name) for col in InfluencerProfile.__table__.columns}
 
-@router.post("/reset-all-danger-zone")
-def reset_all_influencers(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    """
-    DANGER ZONE: Deletes all influencer-related data.
-    This includes ratings, profiles, and the users themselves.
-    """
-    # 1. Delete ratings
-    db.query(InfluencerRating).delete()
-    
-    # 2. Delete profiles
-    db.query(InfluencerProfile).delete()
-    
-    # 3. Delete conversation participants for influencers
-    # (Optional: can be more specific, but for reset let's clear them)
-    from app.models import ConversationParticipant
-    db.query(ConversationParticipant).filter(
-        ConversationParticipant.user_id.in_(
-            db.query(User.id).filter(User.role == "influencer")
-        )
-    ).delete(synchronize_session=False)
-
-    # 4. Delete influencers from User table
-    db.query(User).filter(User.role == "influencer").delete(synchronize_session=False)
-    
-    db.commit()
-    return {"message": "All influencer data has been reset successfully."}
