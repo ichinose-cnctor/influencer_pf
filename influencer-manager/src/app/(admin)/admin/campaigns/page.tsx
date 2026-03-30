@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/Pagination";
-import { campaignApi } from "@/lib/api";
+import { campaignApi, dashboardApi } from "@/lib/api";
 
 const CATEGORIES = ["すべて", "ホテル＆宿泊", "飲食店", "体験＆ツアー"];
 const AREAS = ["すべて", "全国", "関東", "関西", "東海", "九州・沖縄", "北海道・東北", "中国・四国", "海外"];
@@ -67,6 +67,26 @@ function CampaignsContent() {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    recruiting: 0,
+    active: 0,
+    completed: 0,
+    total: 0
+  });
+
+  const fetchStats = async () => {
+    try {
+      const s = await dashboardApi.getStats();
+      setStats({
+        recruiting: s.recruiting_campaigns,
+        active: s.active_campaigns,
+        completed: s.completed_campaigns,
+        total: s.recruiting_campaigns + s.active_campaigns + s.completed_campaigns
+      });
+    } catch (err) {
+      console.error("Failed to fetch stats", err);
+    }
+  };
 
   const fetchCampaigns = async () => {
     setLoading(true);
@@ -94,6 +114,7 @@ function CampaignsContent() {
   };
 
   useEffect(() => {
+    fetchStats();
     fetchCampaigns();
   }, [activeTab, currentPage, keyword, category, area, sns, country]);
 
@@ -208,7 +229,10 @@ function CampaignsContent() {
               <div className="min-w-0">
                 <p className={`text-xs truncate ${isActive ? "text-violet-200" : "text-violet-500"}`}>{tab.label}</p>
                 <p className={`text-base sm:text-lg font-bold leading-none mt-0.5 ${isActive ? "text-white" : "text-violet-700"}`}>
-                  {activeTab === tab.key ? total : "—"}件
+                  {tab.key === "全て" ? stats.total :
+                   tab.key === "募集中" ? stats.recruiting :
+                   tab.key === "進行中" ? stats.active :
+                   stats.completed}件
                 </p>
               </div>
             </button>
